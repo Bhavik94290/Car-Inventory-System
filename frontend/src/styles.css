@@ -100,10 +100,25 @@ body {
 input, select {
   font-family: var(--body); font-size: 0.95rem;
   padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--panel); width: 100%;
+  background: var(--panel); color: var(--ink); width: 100%;
 }
 input:focus, select:focus, .btn:focus-visible {
   outline: 2px solid var(--petrol); outline-offset: 1px;
+}
+/* Chrome/Edge/Safari force a light background + dark text on autofilled
+   inputs (e.g. a Category you've typed before, saved emails/passwords),
+   completely ignoring the page's own dark theme, and it can't be overridden
+   with a plain background rule — only this specific autofill pseudo-class
+   + an inset box-shadow "paint over" hack actually works. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--panel) inset;
+  box-shadow: 0 0 0 1000px var(--panel) inset;
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-in-out 0s;
 }
 label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px; color: var(--steel); }
 label input, label select { margin-top: 5px; }
