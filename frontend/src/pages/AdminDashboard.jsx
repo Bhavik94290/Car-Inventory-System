@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client.js'
+import CarIllustration from '../components/CarIllustration.jsx'
 
-const emptyForm = { make: '', model: '', category: '', price: '', quantity: '' }
+const emptyForm = { make: '', model: '', category: '', price: '', quantity: '', imageUrl: '' }
+const shortId = (id) => (id && id.length > 16 ? `${id.slice(0, 14)}…` : id)
 
 export default function AdminDashboard() {
   const [vehicles, setVehicles] = useState([])
@@ -9,6 +11,7 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const load = async () => {
     try {
@@ -50,7 +53,7 @@ export default function AdminDashboard() {
 
   const startEdit = (v) => {
     setEditingId(v.id)
-    setForm({ make: v.make, model: v.model, category: v.category, price: v.price, quantity: v.quantity })
+    setForm({ make: v.make, model: v.model, category: v.category, price: v.price, quantity: v.quantity, imageUrl: v.imageUrl || '' })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -67,6 +70,27 @@ export default function AdminDashboard() {
       load()
     } catch (err) {
       fail(err, 'Delete failed.')
+    }
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setError('')
+    setUploading(true)
+    const body = new FormData()
+    body.append('file', file)
+    try {
+      const { data } = await api.post('/vehicles/upload-image', body, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setForm((f) => ({ ...f, imageUrl: data.imageUrl }))
+      notify('Image uploaded.')
+    } catch (err) {
+      fail(err, 'Image upload failed.')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
     }
   }
 
@@ -100,6 +124,21 @@ export default function AdminDashboard() {
           <input name="category" placeholder="Category" value={form.category} onChange={handleChange} required />
           <input name="price" type="number" min="1" placeholder="Price" value={form.price} onChange={handleChange} required />
           <input name="quantity" type="number" min="0" placeholder="Quantity" value={form.quantity} onChange={handleChange} required />
+          <input name="imageUrl" placeholder="Image URL (optional)" value={form.imageUrl} onChange={handleChange} />
+        </div>
+        <div className="admin-form-image-row">
+          <label className="btn btn-outline btn-mini upload-btn">
+            {uploading ? 'Uploading…' : '📷 Upload photo'}
+            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} hidden />
+          </label>
+          {form.imageUrl && (
+            <div className="admin-image-preview">
+              <img src={form.imageUrl} alt="Preview" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+              <button type="button" className="btn btn-mini btn-danger" onClick={() => setForm((f) => ({ ...f, imageUrl: '' }))}>
+                Remove
+              </button>
+            </div>
+          )}
         </div>
         <div className="admin-form-actions">
           <button className="btn btn-solid" type="submit">{editingId ? 'Save changes' : 'Add vehicle'}</button>
@@ -110,13 +149,20 @@ export default function AdminDashboard() {
       <table className="inventory-table">
         <thead>
           <tr>
-            <th>ID</th><th>Make</th><th>Model</th><th>Category</th><th>Price</th><th>Qty</th><th>Actions</th>
+            <th>Photo</th><th>ID</th><th>Make</th><th>Model</th><th>Category</th><th>Price</th><th>Qty</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {vehicles.map((v) => (
             <tr key={v.id} className={v.quantity === 0 ? 'row-out' : ''}>
-              <td>{v.id}</td>
+              <td className="table-thumb">
+                {v.imageUrl ? (
+                  <img src={v.imageUrl} alt="" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                ) : (
+                  <CarIllustration category={v.category} className="table-thumb-illustration" />
+                )}
+              </td>
+              <td title={v.id}>{shortId(v.id)}</td>
               <td>{v.make}</td>
               <td>{v.model}</td>
               <td>{v.category}</td>
