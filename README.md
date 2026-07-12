@@ -223,7 +223,7 @@ cd backend
 mvn test
 ```
 
-**Test Summary:** 23 tests passed (100%), covering Auth and Vehicle/Inventory business logic — JUnit 5 + Mockito + AssertJ, H2 in-memory DB.
+**Test Summary:** 23 tests passed (100%), covering Auth and Vehicle/Inventory business logic — JUnit 5 + Mockito + AssertJ, H2 in-memory DB. Full breakdown (per-test results, JaCoCo coverage, timings): [TestReport.md](TestReport.md).
 
 ---
 
