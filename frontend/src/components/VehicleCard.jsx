@@ -10,7 +10,7 @@ export default function VehicleCard({ vehicle }) {
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const { addToCart } = useCart()
-  const { isAdmin } = useAuth()
+  const { user, isAdmin } = useAuth()
   const categoryStyle = resolveCategoryStyle(vehicle.category)
 
   const outOfStock = vehicle.quantity === 0
@@ -53,6 +53,8 @@ export default function VehicleCard({ vehicle }) {
       <div className="car-card-body">
         {isAdmin ? (
           <p className="muted small">Manage this vehicle from the Admin Dashboard.</p>
+        ) : !user ? (
+          <p className="muted small"><Link to="/login">Log in</Link> to add this to your cart.</p>
         ) : outOfStock ? (
           <p className="muted small">Currently unavailable</p>
         ) : (

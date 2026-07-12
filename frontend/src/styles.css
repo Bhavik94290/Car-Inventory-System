@@ -49,10 +49,7 @@ body {
   color: #fff;
 }
 .brand { text-decoration: none; color: #fff; display: flex; align-items: center; gap: 10px; line-height: 1.1; }
-.brand-logo { font-size: 1.5rem; line-height: 1; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35)); }
-.brand-text { display: flex; flex-direction: column; }
-.brand-mark { font-family: var(--display); font-weight: 800; letter-spacing: 0.14em; font-size: 1.15rem; }
-.brand-sub { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--signal); }
+.brand-mark { font-family: var(--display); font-weight: 800; letter-spacing: 0.02em; font-size: 1.15rem; }
 .nav-links { display: flex; align-items: center; gap: 20px; }
 .nav-links a { color: #e8eaef; text-decoration: none; font-size: 0.92rem; }
 .nav-links a:hover { color: var(--signal); }

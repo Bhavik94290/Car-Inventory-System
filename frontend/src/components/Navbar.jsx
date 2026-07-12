@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCart } from '../context/CartContext.jsx'
+import Logo from './Logo.jsx'
 
 export default function Navbar() {
   const { user, isAdmin, logout } = useAuth()
@@ -16,11 +17,8 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <Link to="/" className="brand">
-        <span className="brand-logo" aria-hidden="true">🚗</span>
-        <span className="brand-text">
-          <span className="brand-mark">AI·KATA</span>
-          <span className="brand-sub">Car Dealership Inventory</span>
-        </span>
+        <Logo />
+        <span className="brand-mark">Car Dealership Inventory</span>
       </Link>
       <nav className="nav-links">
         <Link to="/">Showroom</Link>
