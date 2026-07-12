@@ -9,7 +9,7 @@ const priceFmt = (n) => Number(n).toLocaleString('en-IN', {
 
 const GREETING = {
   role: 'assistant',
-  content: "Hi! I'm the AI·KATA assistant. Ask me about available cars, prices, categories, or your past orders.",
+  content: "Hi! I'm the Car Dealership assistant. Ask me about available cars, prices, categories, or your past orders.",
   vehicles: [],
 }
 
@@ -53,7 +53,7 @@ export default function ChatWidget() {
       {open && (
         <div className="chat-panel">
           <div className="chat-panel-header">
-            <span>🚗 AI·KATA Assistant</span>
+            <span>🚗 Car Dealership Assistant</span>
             <button className="chat-close" onClick={() => setOpen(false)} aria-label="Close chat">✕</button>
           </div>
 
