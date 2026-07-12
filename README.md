@@ -1,284 +1,297 @@
-# Car Dealership Inventory System
+# 🚘 Car Dealership Inventory System
 
-A full-stack car dealership inventory system built with **Java Spring Boot** (backend), **React** (frontend) and **MySQL** — developed with a **TDD (Test-Driven Development)** approach.
+A full-stack car dealership inventory system — built with **Java Spring Boot**, **React**, and **MySQL** using a **TDD (Test-Driven Development)** approach. Shoppers browse and buy vehicles with real Razorpay payments and email OTP password resets; admins manage inventory from a separate dashboard.
 
-Shoppers can register, log in, browse and search cars, view full vehicle details, add them to a cart, and pay via **Razorpay** — with a downloadable **PDF receipt** afterward. Admins get a separate dark back-office dashboard to add, update, delete and restock vehicles, with photo uploads and live inventory stats. Forgot your password? A real 6-digit code gets emailed to you. An **AI chat assistant** (Claude) helps visitors search inventory and check their own orders. Purchasing (directly or via checkout) decrements stock; when quantity hits 0, the Purchase/Add-to-Cart controls are disabled and the API rejects further purchases.
+## Local URLs & Ports
 
-### Contents
-- [App tour](#app-tour) — what it looks like, screen by screen
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Running the backend](#running-the-backend) / [frontend](#running-the-frontend)
-- [Deployment](#deployment) — Netlify + Render
-- [API reference](#api-reference)
-- [TDD approach](#tdd-approach-red--green--refactor)
-- [Feature checklist](#feature-checklist)
-- [My AI usage](#my-ai-usage)
-
----
-
-## App tour
-
-### 🔐 Create an account, log in, and recover a forgotten password
-Registration always creates a regular **USER** account — there's no way to self-register as admin. Forgot your password? Enter your email, get a real 6-digit code by email, and set a new password on the same screen.
-
-| Register | Log in |
-|---|---|
-| ![Register](docs/screenshots/register.png) | ![Login](docs/screenshots/login.png) |
-
-| Request a code | Enter the code + new password |
-|---|---|
-| ![Forgot password](docs/screenshots/forgot-password.png) | ![Enter OTP](docs/screenshots/forgot-password-otp.png) |
-
-The code really does arrive by email (Gmail SMTP), not just an on-screen shortcut:
-
-![Password reset email](docs/screenshots/password-reset-email.png)
-
-### 🚘 Browse the showroom and drill into a vehicle
-Filter by make, model, category and price range, jump straight to a category with the quick-filter chips, or click any car for its own detail page with full specs.
-
-| Showroom | Vehicle detail |
-|---|---|
-| ![Showroom](docs/screenshots/showroom.png) | ![Vehicle detail](docs/screenshots/vehicle-detail.png) |
-
-Logged-out visitors can browse and view details freely, but see a clear **"Log in to add this to your cart"** prompt instead of cart controls — no silently-broken buttons.
-
-### 🛒 Cart, checkout, and secure payment
-Add vehicles to your cart, review the total, and pay through **Razorpay Checkout** (cards, netbanking, and more) — the payment signature is verified server-side before the order is marked paid.
-
-| Cart | Checkout | Razorpay payment |
+| App | URL | Port |
 |---|---|---|
-| ![Cart](docs/screenshots/cart.png) | ![Checkout](docs/screenshots/checkout.png) | ![Razorpay payment](docs/screenshots/razorpay-payment.png) |
-
-![Payment successful](docs/screenshots/payment-success.png)
-
-### 📦 Order history & PDF receipts
-Every past order is listed with its status, and a one-click **PDF receipt** can be downloaded any time — for that order or straight off the payment-success screen.
-
-| My Orders | PDF receipt |
-|---|---|
-| ![My Orders](docs/screenshots/orders.png) | ![PDF receipt](docs/screenshots/receipt-pdf.png) |
-
-### 🛠️ Admin back office
-A separate dark dashboard with live inventory stats, full vehicle CRUD with photo upload, and the ability for an existing admin to create additional admin accounts — public registration can never do that itself.
-
-| Admin dashboard | Create another admin |
-|---|---|
-| ![Admin dashboard](docs/screenshots/admin-panel.png) | ![Create admin](docs/screenshots/admin-create-admin.png) |
-
-![Admin inventory table](docs/screenshots/admin-inventory-table.png)
+| Frontend (Vite dev server) | http://localhost:5173 | `5173` |
+| Backend API (Spring Boot) | http://localhost:8080 | `8080` (or `$PORT` if set — used by Render) |
 
 ---
 
-## Tech stack
+## Installation Guide
 
-| Layer    | Technology |
-|----------|------------|
-| Backend  | Java 17, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security, JWT (jjwt), Spring Mail (Gmail SMTP), Lombok, Validation, DevTools (auto-restart) |
-| Database | MySQL 8 (H2 in-memory used for tests) |
-| Payments | Razorpay (Orders API + HMAC-SHA256 payment signature verification) |
-| AI       | Claude (Anthropic Java SDK) — tool-use chat assistant |
-| Frontend | React 18, Vite, Axios, React Router, jsPDF (client-side receipt generation) |
-| Testing  | JUnit 5, Mockito, AssertJ |
+### 1. Repository Setup
 
-## Project structure
-
-```
-AI_Kata_Car_Dealership_Inventory_System/
-├── backend/                     # Spring Boot API
-│   ├── pom.xml
-│   ├── .env.example             # copy to .env and fill in real secrets (git-ignored)
-│   └── src/
-│       ├── main/java/com/kata/dealership/
-│       │   ├── entity/          # User, Vehicle, Role, Order, OrderItem, OrderStatus, Payment, PaymentStatus
-│       │   ├── repository/      # Spring Data JPA repos (+ search query)
-│       │   ├── dto/             # Request/response objects with validation
-│       │   ├── security/        # JwtService, JwtAuthFilter, SecurityConfig
-│       │   ├── service/         # AuthService, VehicleService, PaymentService, RazorpayService, ChatService, FileStorageService
-│       │   ├── controller/      # AuthController, VehicleController, OrderController, ChatController
-│       │   ├── config/          # WebConfig (serves uploaded vehicle images), VehicleDataSeeder (starter inventory)
-│       │   ├── util/            # IdGenerator (generated String primary keys)
-│       │   └── exception/       # Custom exceptions + global handler
-│       └── test/java/com/kata/dealership/service/
-│           ├── VehicleServiceTest.java   # TDD tests for inventory logic
-│           └── AuthServiceTest.java      # TDD tests for register/login/forgot-password/reset-password
-└── frontend/                    # React app (Vite)
-    └── src/
-        ├── api/client.js        # Axios instance, JWT interceptor
-        ├── context/             # AuthContext, CartContext (syncs with live prices/stock)
-        ├── components/          # Navbar, SearchBar, CategoryChips, VehicleCard, CarIllustration, ChatWidget, ErrorBoundary
-        ├── utils/                # categoryStyle.js (shared category colors), receipt.js (PDF generation)
-        └── pages/                # Login, Register, ForgotPassword (combined OTP + reset), Home, VehicleDetail,
-                                   # AdminDashboard, CartPage, CheckoutPage, OrdersPage
+```bash
+git clone https://github.com/Bhavik94290/Car-Inventory-System
+cd Car-Inventory-System
 ```
 
----
+### 2. Backend Configuration
 
-## Running the backend
-
-1. **Prerequisites:** Java 17+, Maven, MySQL 8 running locally.
-2. Create the database (or let the app create it):
-   ```sql
-   CREATE DATABASE dealership_db;
-   ```
-3. Configure secrets. Easiest: copy `backend/.env.example` to `backend/.env` and fill in real values — it's loaded automatically and never committed (git-ignored):
-   ```
-   DB_USERNAME=root
-   DB_PASSWORD=<your mysql password>
-   JWT_SECRET=<a long random secret, 64+ chars>
-   RAZORPAY_KEY_ID=<from https://dashboard.razorpay.com/app/keys>
-   RAZORPAY_KEY_SECRET=<from the same page>
-   ANTHROPIC_API_KEY=<from https://console.anthropic.com/settings/keys>
-   MAIL_USERNAME=<your Gmail address, for password-reset OTP emails>
-   MAIL_PASSWORD=<a Google App Password from https://myaccount.google.com/apppasswords>
-   MAIL_FROM=<defaults to MAIL_USERNAME if unset>
-   UPLOAD_DIR=uploads/vehicles   # optional, defaults shown
-   ```
-   (Plain shell environment variables work too, if you'd rather not use the `.env` file.)
-
-   Checkout, payment verification, the chat assistant, and forgot-password emails won't work without valid Razorpay/Anthropic/Gmail credentials — everything else (browsing, auth, admin CRUD) works fine without them. Razorpay also enforces its own per-transaction amount limit on new/unactivated accounts (commonly ₹5,00,000) — the seed data is priced to stay well under that. Gmail SMTP requires 2-Step Verification enabled on the account before an App Password can be generated.
-4. Start the API:
-   ```bash
-   cd backend
-   mvn spring-boot:run
-   ```
-   The API runs at `http://localhost:8080`. On first boot with an empty database, `VehicleDataSeeder` populates ~24 realistic starter vehicles automatically. Thanks to Spring Boot DevTools, the app auto-restarts whenever your IDE recompiles a changed class — no need to stop/start it manually.
-
-### Run the tests (TDD suite)
 ```bash
 cd backend
-mvn test
+copy .env.example .env
 ```
 
-## Running the frontend
+Fill in `backend/.env` with real values (never commit this file — it's git-ignored):
+
+| Variable | Purpose |
+|---|---|
+| `DB_URL` | Optional — full JDBC URL for hosted MySQL. Leave unset locally (defaults to `jdbc:mysql://localhost:3306/dealership_db`) |
+| `DB_USERNAME` | MySQL username |
+| `DB_PASSWORD` | MySQL password |
+| `JWT_SECRET` | 64+ char random Base64 string used to sign login JWTs |
+| `RAZORPAY_KEY_ID` | From [dashboard.razorpay.com/app/keys](https://dashboard.razorpay.com/app/keys) |
+| `RAZORPAY_KEY_SECRET` | From the same Razorpay dashboard page |
+| `ANTHROPIC_API_KEY` | From [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) — powers the chat assistant |
+| `MAIL_USERNAME` | Gmail address used to send password-reset OTP emails |
+| `MAIL_PASSWORD` | 16-character [Google App Password](https://myaccount.google.com/apppasswords) (not your normal Gmail password) |
+| `MAIL_FROM` | Optional — defaults to `MAIL_USERNAME` if unset |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origins allowed to call the API — defaults to `http://localhost:5173,http://localhost:3000` |
+| `UPLOAD_DIR` | Optional — where vehicle photos are stored, defaults to `uploads/vehicles` |
+
+Maven resolves dependencies automatically on first run — no separate install step.
+
+### 3. Frontend Configuration
 
 ```bash
 cd frontend
 npm install
+copy .env.example .env
+```
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_BASE_URL` | Base URL the frontend calls for the API — defaults to `http://localhost:8080/api` for local dev |
+
+### 4. Database Setup
+
+```sql
+CREATE DATABASE dealership_db;
+```
+(Or let the app create it automatically on first boot — `createDatabaseIfNotExist=true` is set.)
+
+---
+
+## Development Environment
+
+### Backend Server
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+*Server available at: [http://localhost:8080](http://localhost:8080)*
+
+On first boot with an empty database, `VehicleDataSeeder` populates ~26 realistic starter vehicles across 7 categories automatically. Spring Boot DevTools auto-restarts the app whenever a class is recompiled.
+
+### Frontend Development Server
+
+```bash
+cd frontend
 npm run dev
 ```
-Open `http://localhost:5173`. CORS is preconfigured for this origin.
+*Application available at: [http://localhost:5173](http://localhost:5173)*
+
+---
+
+## Feature Tour
+
+### 🔐 Register, log in, and recover a forgotten password
+
+Public registration always creates a **USER** account — there's no self-service way to become admin (`AuthController.register` in [`backend/src/main/java/com/kata/dealership/controller/AuthController.java`](backend/src/main/java/com/kata/dealership/controller/AuthController.java), UI in [`frontend/src/pages/Register.jsx`](frontend/src/pages/Register.jsx)). The password field enforces 8+ characters with an uppercase letter, lowercase letter, digit and symbol before the **Register** button will even submit.
+
+![Create account](docs/screenshots/register.png)
+
+Logging in ([`frontend/src/pages/Login.jsx`](frontend/src/pages/Login.jsx)) returns a JWT that `AuthContext` stores and attaches to every subsequent API call.
+
+![Welcome back / login](docs/screenshots/login.png)
+
+Forgot your password? Enter your email on [`frontend/src/pages/ForgotPassword.jsx`](frontend/src/pages/ForgotPassword.jsx) — the backend (`AuthService.forgotPassword`) always returns the same generic response whether or not the account exists (no email enumeration), but if it does exist, `EmailService` sends a real 6-digit OTP over Gmail SMTP.
+
+![Forgot your password](docs/screenshots/forgot-password.png)
+
+Enter the code plus a new password (validated with the same complexity rules) and `AuthService.resetPassword` verifies the OTP is correct and not expired (10-minute window) before updating the hash.
+
+![Enter your code](docs/screenshots/forgot-password-otp.png)
+
+The actual email the user receives, sent through the Gmail account configured via `MAIL_USERNAME`/`MAIL_PASSWORD`:
+
+![Password reset email](docs/screenshots/password-reset-email.png)
+
+### 🚘 Browse the showroom and drill into a vehicle
+
+[`frontend/src/pages/Home.jsx`](frontend/src/pages/Home.jsx) calls `GET /api/vehicles/search` (`VehicleController` → `VehicleService`) with filters for make, model, category, min/max price, an "in stock only" checkbox, and a sort dropdown (Newest listed, Price low→high/high→low, Most in stock, Make A–Z). Quick-filter chips (`CategoryChips.jsx`) jump straight to a category — Electric, Hatchback, Pickup, SUV, Sedan, Sports, Van.
+
+![The showroom floor](docs/screenshots/showroom.png)
+
+Logged-out visitors browsing the grid see a clear **"Log in to add this to your cart"** prompt instead of a broken button:
+
+![Showroom, logged out](docs/screenshots/showroom-logged-out.png)
+
+Once logged in, each `VehicleCard` gets a quantity stepper and an **Add to Cart** button:
+
+![Showroom, logged in with Add to Cart](docs/screenshots/showroom-logged-in.png)
+
+Clicking any car opens its own detail page ([`frontend/src/pages/VehicleDetail.jsx`](frontend/src/pages/VehicleDetail.jsx)) with make, model, category, available units and its own quantity/Add to Cart control.
+
+![Vehicle detail](docs/screenshots/vehicle-detail.png)
+
+### 🛒 Cart, checkout, and secure payment
+
+`CartContext` holds the cart client-side; [`frontend/src/pages/CartPage.jsx`](frontend/src/pages/CartPage.jsx) lets you adjust quantity or remove a line before totalling the price.
+
+![Your cart](docs/screenshots/cart.png)
+
+[`frontend/src/pages/CheckoutPage.jsx`](frontend/src/pages/CheckoutPage.jsx) calls `POST /api/orders/checkout` (`OrderController` → `PaymentService` → `RazorpayService`), which creates a Razorpay order server-side before the **Pay with Razorpay** button is even clickable.
+
+![Checkout](docs/screenshots/checkout.png)
+
+Razorpay's own hosted checkout handles card/netbanking/wallet entry — the app never sees raw card details:
+
+![Razorpay payment options](docs/screenshots/razorpay-payment-options.png)
+![Razorpay netbanking](docs/screenshots/razorpay-netbanking.png)
+![Razorpay processing](docs/screenshots/razorpay-processing.png)
+![Razorpay confirming payment](docs/screenshots/razorpay-confirming.png)
+
+After Razorpay redirects back, the frontend posts the payment signature to `POST /api/orders/verify`, which `PaymentService` checks with HMAC-SHA256 against the Razorpay secret **before** marking the order `PAID` — a forged client-side "success" can't fake a paid order.
+
+![Payment successful](docs/screenshots/payment-success.png)
+
+### 📦 Order history & PDF receipts
+
+[`frontend/src/pages/OrdersPage.jsx`](frontend/src/pages/OrdersPage.jsx) calls `GET /api/orders/mine`, listing every past order with its paid status and a one-click **Download Receipt (PDF)** button generated client-side with `jspdf` ([`frontend/src/utils/receipt.js`](frontend/src/utils/receipt.js)).
+
+![My orders](docs/screenshots/orders.png)
+
+The generated receipt — order ID, payment ID, itemized vehicle/qty/price, and total:
+
+![PDF receipt](docs/screenshots/receipt-pdf.png)
+
+Razorpay's own success screen and receipt, shown mid-flow for reference:
+
+![Razorpay payment successful](docs/screenshots/razorpay-payment-successful.png)
+
+### 🛠️ Admin back office
+
+A separate dark dashboard ([`frontend/src/pages/AdminDashboard.jsx`](frontend/src/pages/AdminDashboard.jsx)) with live inventory stats (total vehicles, units in stock, out-of-stock count, total inventory value) pulled from `VehicleService`.
+
+![Admin dashboard](docs/screenshots/admin-panel.png)
+
+**+ Create admin** reveals a form that calls `POST /api/auth/register-admin` — the *only* way to mint another ADMIN account, and it's itself admin-only, closing the loop on privilege escalation.
+
+![Create admin account](docs/screenshots/admin-create-admin.png)
+
+Below the stats, full vehicle CRUD: add a vehicle (with photo upload via `POST /api/vehicles/upload-image` → `FileStorageService`), and per-row **Edit**, **Restock**, and **Delete** actions.
+
+![Admin inventory table](docs/screenshots/admin-inventory-table.png)
+
+The sort dropdown is shared with the public showroom view, so admins browsing the storefront get the same Newest/Price/Stock/Make sorting:
+
+![Sort dropdown](docs/screenshots/showroom-sort-dropdown.png)
 
 ---
 
 ## Deployment
 
-The frontend and backend deploy to **different** platforms — Netlify only hosts static sites, it can't run a persistent Spring Boot process or a database. This repo is preconfigured (`netlify.toml`, `render.yaml`) for **Netlify (frontend) + Render (backend)**, plus a separately-hosted MySQL database since Render's own managed database product is Postgres, not MySQL.
+The frontend and backend deploy to **different** platforms — Netlify only hosts static sites, it can't run a persistent Spring Boot process or a database. This repo is preconfigured (`netlify.toml`, `render.yaml`, `backend/Dockerfile`) for **Netlify (frontend) + Render (backend, via Docker)**, plus a separately-hosted MySQL database since Render's own managed database product is Postgres, not MySQL.
 
-1. **Database.** Provision MySQL on a host of your choice (e.g. Aiven, Railway, Clever Cloud) and note its connection details — host, port, database name, username, password.
-2. **Backend (Render).** Push this repo to GitHub, then on Render: **New → Blueprint**, connect the repo — it reads `render.yaml` automatically. Fill in the requested environment variables:
-   - `DB_URL` — full JDBC URL, e.g. `jdbc:mysql://<host>:<port>/<db>?useSSL=true`
-   - `DB_USERNAME`, `DB_PASSWORD` — from step 1
-   - `JWT_SECRET` — a long random string
-   - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `ANTHROPIC_API_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` — same values as your local `.env`
-   - `CORS_ALLOWED_ORIGINS` — leave for now, set after step 3
-   Deploy, then note the resulting `https://<your-service>.onrender.com` URL.
-3. **Frontend (Netlify).** **Add new site → Import from Git**, select the repo — Netlify auto-detects `netlify.toml` (builds from `frontend/`, publishes `dist/`). Add one build environment variable: `VITE_API_BASE_URL = https://<your-render-url>/api`. Deploy, then note the resulting `https://<your-site>.netlify.app` URL.
-4. **Close the loop.** Back on Render, set `CORS_ALLOWED_ORIGINS` to that Netlify URL (comma-separated if you want to keep local origins too) and redeploy.
+1. **Database** — provision MySQL on a host of your choice (e.g. Railway, Aiven, Clever Cloud) and note its connection details.
+2. **Backend (Render)** — push to GitHub, then **New → Blueprint**, connect the repo — it reads `render.yaml` automatically. Fill in `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `ANTHROPIC_API_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` (leave `CORS_ALLOWED_ORIGINS` for step 4). Deploy and note the resulting URL.
+3. **Frontend (Netlify)** — Import from Git, Netlify auto-detects `netlify.toml`. Add build env var `VITE_API_BASE_URL = https://<your-render-url>/api`. Deploy and note the resulting URL.
+4. **Close the loop** — back on Render, set `CORS_ALLOWED_ORIGINS` to your Netlify URL and redeploy.
 
-**Known limitations of this setup:** Render's free web service disk is ephemeral, so admin-uploaded vehicle photos (`/uploads/vehicles`) won't survive a redeploy or restart — fine for a demo, but a real deployment would need S3/Cloudinary-style storage instead. The free tier also spins down after inactivity, so the first request after idling can take 30–60s to wake up.
+**Known limitations:** Render's free web service disk is ephemeral, so admin-uploaded vehicle photos won't survive a redeploy. The free tier also spins down after inactivity (first request after idling can take 30–60s).
 
 ---
 
-## API reference
+## Quality Assurance
 
-### Auth
-| Method | Endpoint             | Access    | Body                              | Notes |
-|--------|----------------------|-----------|------------------------------------|-------|
-| POST   | `/api/auth/register` | Public    | `{name, email, password}`         | Always creates a **USER** account — there is no way to self-register as admin. Password needs 8+ chars, upper/lower/digit/symbol. Returns JWT. |
-| POST   | `/api/auth/register-admin` | **ADMIN** | `{name, email, password}`   | Creates a new **ADMIN** account. Only an already-authenticated admin can call this (`Authorization: Bearer <adminToken>`). Returns `{name, email, role}` — no token, since it's not a login for the new account. |
-| POST   | `/api/auth/login`    | Public    | `{email, password}`               | Returns JWT + user info. |
-| POST   | `/api/auth/forgot-password` | Public | `{email}`                    | Always returns the same generic message (no email enumeration). Emails a 6-digit OTP via Gmail SMTP if the address is registered. |
-| POST   | `/api/auth/reset-password`  | Public | `{email, otp, newPassword}`  | OTP is valid for 10 minutes and single-use. Returns **400** if the email/OTP pair is invalid or expired. |
+#### 🧱 TDD approach (Red → Green → Refactor)
 
-### Vehicles
-| Method | Endpoint                      | Access      | Notes |
-|--------|-------------------------------|-------------|-------|
-| GET    | `/api/vehicles`               | Public      | List all vehicles (unpaginated). |
-| GET    | `/api/vehicles/search`        | Public      | Query params: `make, model, category, minPrice, maxPrice, inStockOnly, page, size (max 100), sortBy (createdAt\|make\|model\|category\|price\|quantity), sortDir (asc\|desc)`. Returns a Spring `Page<Vehicle>`. |
-| GET    | `/api/vehicles/{id}`          | Public      | Single vehicle. |
-| POST   | `/api/vehicles`               | **ADMIN**   | Add vehicle. Body may include `imageUrl`. |
-| PUT    | `/api/vehicles/{id}`          | **ADMIN**   | Update vehicle. |
-| DELETE | `/api/vehicles/{id}`          | **ADMIN**   | Delete vehicle. |
-| POST   | `/api/vehicles/upload-image`  | **ADMIN**   | Multipart `file` (jpg/jpeg/png/gif/webp, max 5MB). Returns `{imageUrl}`; served from `/uploads/vehicles/**`. |
-| POST   | `/api/vehicles/{id}/restock`  | **ADMIN**   | Body: `{amount}` — increases quantity. |
-| POST   | `/api/vehicles/{id}/purchase` | Logged in   | Decreases quantity by 1; returns **409 Conflict** if quantity is 0. |
+The core business rules were driven by tests written **before** the implementation — e.g. *"purchase reduces quantity from 4 to 3"* and *"purchase throws OutOfStockException when quantity = 0"* were failing tests first, then `VehicleService.purchase()` was implemented to pass them, then refactored (extracted exceptions, added `@Transactional`) while staying green.
 
-### Orders & payments (Razorpay)
-| Method | Endpoint                | Access    | Notes |
-|--------|--------------------------|-----------|-------|
-| POST   | `/api/orders/checkout`  | Logged in | Body: `{items: [{vehicleId, quantity}]}`. Validates stock, creates a Razorpay order, returns `{orderId, razorpayOrderId, amount, currency, keyId}` for the frontend to open Razorpay Checkout with. |
-| POST   | `/api/orders/verify`   | Logged in | Body: `{orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature}`. Verifies the HMAC signature, decrements stock and marks the order PAID; idempotent if replayed. Returns **402** on signature mismatch. |
-| GET    | `/api/orders/mine`     | Logged in | The caller's past orders, newest first. Each can be downloaded as a PDF receipt from the frontend. |
+Covered by the suite:
+- **Auth**: register always creates a USER, `registerAdmin` (admin-only) creates an ADMIN, duplicate email rejected, login works/rejects bad credentials, forgot-password emails a 6-digit OTP without leaking whether the email exists, reset-password accepts a valid OTP and rejects wrong/unknown-email/expired ones.
+- **Vehicles**: add, get all, search (pagination/sorting/in-stock-only), update, delete, not-found cases.
+- **Inventory**: purchase decrements quantity, fails at 0 stock; restock increments quantity, rejects non-positive amounts.
 
-### Chat assistant
-| Method | Endpoint     | Access | Notes |
-|--------|--------------|--------|-------|
-| POST   | `/api/chat`  | Public | Body: `{message, history: [{role, content}]}`. Works for anonymous visitors (vehicle search) and, with a valid token, logged-in users (order lookup too). Returns `{reply, vehicles: [...]}`. |
+**Known gap:** `PaymentService`, `RazorpayService`, `ChatService` and `FileStorageService` don't have unit tests yet.
 
-Protected endpoints require the header: `Authorization: Bearer <token>`.
+---
 
-### Example vehicle
-```json
-{
-  "id": "vehicle_3f9c2b1e4a7d4c6e9b0a1f2d3c4b5a6e",
-  "make": "Toyota",
-  "model": "Fortuner",
-  "category": "SUV",
-  "price": 245000,
-  "quantity": 3,
-  "imageUrl": "http://localhost:8080/uploads/vehicles/img_...png",
-  "createdAt": "2026-07-12T05:30:00Z"
-}
+## Running Tests
+
+### Backend Test Suite
+
+```bash
+cd backend
+mvn test
 ```
 
----
-
-## TDD approach (Red → Green → Refactor)
-
-The core business rules were driven by tests written **before** the implementation:
-
-1. **Red** — write a failing test, e.g. *"purchase reduces quantity from 4 to 3"* and *"purchase throws OutOfStockException when quantity = 0"*.
-2. **Green** — implement the minimum code in `VehicleService.purchase()` to pass.
-3. **Refactor** — extract exceptions, add `@Transactional`, clean up while tests stay green.
-
-Covered by the suite (`mvn test`):
-- Auth: register always creates a USER and returns a token, `registerAdmin` (admin-only endpoint) creates an ADMIN account, duplicate email rejected, login works, wrong credentials rejected, forgot-password emails a 6-digit OTP without leaking whether the email exists, reset-password updates the password for a valid OTP and rejects wrong/unknown-email/expired OTPs.
-- Vehicles: add, get all, search (with pagination, sorting and the in-stock-only filter), update, update-not-found, delete, delete-not-found.
-- Inventory: purchase decrements quantity, purchase fails at 0 stock, restock increments quantity, restock rejects non-positive amounts.
-
-**Known gap:** `PaymentService`, `RazorpayService`, `ChatService` and `FileStorageService` don't have unit tests yet — they were added after the TDD suite above and haven't been back-filled with tests. Contributions welcome.
+**Test Summary:** 23 tests passed (100%), covering Auth and Vehicle/Inventory business logic — JUnit 5 + Mockito + AssertJ, H2 in-memory DB.
 
 ---
 
-## Feature checklist
+## 🏗️ Architecture Overview
 
-- [x] Register / Login with JWT (password policy: 8+ chars, upper/lower/digit/symbol)
-- [x] Forgot / reset password flow with a real 6-digit OTP emailed via Gmail SMTP
-- [x] Roles: USER and ADMIN (Spring Security route rules + `@EnableMethodSecurity`). Public registration always creates a USER; only an existing admin can create another admin, via the Admin Panel's "Create Admin" form
-- [x] View all cars, search/filter/sort/paginate by make / model / category / price range / in-stock-only, plus one-click category chips
-- [x] Vehicle detail page — click any car in the showroom (or a chat assistant result) to see its full details and specs on its own page
-- [x] Purchase directly, or add to cart and pay via Razorpay checkout (signature-verified). Cart/checkout require being logged in as a non-admin user
-- [x] Downloadable PDF receipt after checkout, and for any past order
-- [x] Order history per user
-- [x] Admin: separate dark dashboard with live inventory stats (total vehicles, units in stock, out of stock, inventory value); add / update / delete / restock vehicles, with photo upload; no cart access
-- [x] AI chat assistant (Claude) for vehicle search and order lookup
-- [x] Site-wide dark theme with Material-inspired elevated cards
-- [x] Persistent MySQL storage via Spring Data JPA
-- [x] Validation + global exception handling with clean JSON errors
-- [x] TDD unit tests with JUnit 5 + Mockito
+* **Frontend (React 18 + Vite)** — Axios, React Router, jsPDF for client-side receipt generation, dark theme with Material-inspired elevated cards.
+* **Backend (Java 17 + Spring Boot 3)** — Spring Web, Spring Data JPA, Spring Security + JWT, Spring Mail, layered architecture (controller → service → repository).
+* **Database (MySQL)** — persistent storage via Spring Data JPA; H2 in-memory for tests.
+* **Payments (Razorpay)** — Orders API + HMAC-SHA256 signature verification server-side.
+* **Email (Gmail SMTP)** — real 6-digit OTP codes for password reset.
+* **AI (Claude, Anthropic Java SDK)** — tool-use chat assistant for vehicle search and order lookup.
+* **Testing (JUnit 5 + Mockito + AssertJ)** — TDD unit test suite.
+* **Deployment (Netlify + Render + Docker)** — static frontend on Netlify, containerized backend on Render.
 
-## My AI Usage
+---
 
-**Which AI tools I used:** Claude (Anthropic), via the Claude Code CLI.
+## API Documentation
 
-**How I used it:**
-- **Scaffolding:** Asked Claude to generate the initial Maven `pom.xml` dependency set (Spring Web, Data JPA, Security, Validation, MySQL driver, jjwt) and the Vite/React project skeleton, then adjusted versions and config by hand.
-- **Test generation:** Asked Claude to draft the Mockito/JUnit 5 test cases for `AuthServiceTest` and `VehicleServiceTest` from the plain-English business rules in the kata brief, before any service implementation existed. These tests were run and confirmed failing (RED) before writing the corresponding service, then implemented to make them pass (GREEN).
-- **New features, TDD-first:** The forgot/reset-password flow was built the same way — failing tests committed first (verified failing against a clean build), then the `AuthService` implementation, then the controller/security wiring.
-- **Feature review:** The cart/checkout/Razorpay payments, order history, image uploads, and Claude-powered chat assistant were already written locally. Claude Code reviewed that code (correctness, security, consistency with the rest of the codebase), found and fixed real bugs along the way — e.g. the showroom's default sort silently falling back to oldest-first instead of newest, a currency symbol rendering as garbage in the PDF receipt because the PDF library's font doesn't support the ₹ glyph, and Razorpay's raw JSON error dump leaking onto the checkout screen instead of a readable message.
-- **UI/UX design:** Asked Claude to design and build the dark admin dashboard, the site-wide dark theme, category quick-filter chips, and the vehicle-card/showroom visual refresh, iterating based on screenshots.
-- **Debugging & tooling:** Used Claude to diagnose a broken local Maven plugin cache and a local network TLS-interception issue blocking Maven/npm/GitHub access, add Spring Boot DevTools for auto-restart, and wire up a git-ignored `.env` file so secrets don't need to be re-entered every run.
-- **Git history:** Used Claude Code to build and maintain a clean commit history — a genuine Red → Green → Refactor sequence for the core TDD suite (each Red commit verified against a real failing build, each Green against a real passing test run), short conventional-commit messages (`feat:` / `fix:` / `update:` / `chore:` / `docs:`) for everything after, and a later cleanup pass reasoning through a `git filter-branch` rewrite of already-pushed commits without disturbing shared history.
+### 🔑 Auth Endpoints
+
+| Method | Endpoint                    | Access    | Description |
+|--------|------------------------------|-----------|--------------|
+| POST   | `/api/auth/register`        | Public    | Register — always creates a USER account |
+| POST   | `/api/auth/register-admin`  | Admin only | Create another admin account |
+| POST   | `/api/auth/login`           | Public    | Login, returns JWT |
+| POST   | `/api/auth/forgot-password` | Public    | Emails a 6-digit OTP if the account exists |
+| POST   | `/api/auth/reset-password`  | Public    | Verifies `{email, otp, newPassword}`, OTP valid 10 min |
+
+### 🚗 Vehicle Endpoints
+
+| Method | Endpoint                       | Access     | Description |
+|--------|--------------------------------|------------|--------------|
+| GET    | `/api/vehicles`                | Public     | List all vehicles |
+| GET    | `/api/vehicles/search`         | Public     | Filter/sort/paginate |
+| GET    | `/api/vehicles/{id}`           | Public     | Single vehicle |
+| POST   | `/api/vehicles`                | Admin only | Add vehicle |
+| PUT    | `/api/vehicles/{id}`           | Admin only | Update vehicle |
+| DELETE | `/api/vehicles/{id}`           | Admin only | Delete vehicle |
+| POST   | `/api/vehicles/upload-image`   | Admin only | Upload a vehicle photo |
+| POST   | `/api/vehicles/{id}/restock`   | Admin only | Increase quantity |
+| POST   | `/api/vehicles/{id}/purchase`  | Logged in  | One-click purchase (decrements stock) |
+
+### 💳 Orders & Payments
+
+| Method | Endpoint               | Access    | Description |
+|--------|-------------------------|-----------|--------------|
+| POST   | `/api/orders/checkout` | Logged in | Creates a Razorpay order from the cart |
+| POST   | `/api/orders/verify`   | Logged in | Verifies payment signature, marks order PAID |
+| GET    | `/api/orders/mine`     | Logged in | Caller's past orders |
+
+### 💬 Chat Assistant
+
+| Method | Endpoint    | Access | Description |
+|--------|-------------|--------|--------------|
+| POST   | `/api/chat` | Public | AI-powered vehicle search & order lookup |
+
+A full [Postman collection](postman_collection.json) with every request pre-built is included in the repo root.
+
+---
+
+## AI Tools Used
+
+- **Claude (Anthropic), via Claude Code CLI** — the primary tool used throughout this project.
+- **Scaffolding & TDD** — generated the initial Maven/Vite project skeletons, then drafted failing Mockito/JUnit 5 tests from the kata's plain-English business rules *before* any service implementation existed (verified RED against a real build), followed by the implementation to turn them GREEN.
+- **Feature review** — reviewed already-written code (cart/checkout/Razorpay, image uploads, chat assistant) for correctness and security, catching real bugs (default sort silently falling back to oldest-first, a currency glyph the PDF font couldn't render, a raw Razorpay error leaking onto the checkout screen).
+- **UI/UX** — designed the dark admin dashboard, site-wide theme, category chips, and the Material-inspired card redesign, iterating from screenshots.
+- **New features, TDD-first** — the forgot/reset-password OTP flow (with real Gmail SMTP delivery) and the admin-registration lockdown were both built RED → GREEN → refactor.
+- **Debugging & tooling** — diagnosed a local Maven/git TLS-interception issue, added Spring Boot DevTools auto-restart, wired up a git-ignored `.env` file, and set up the Netlify/Render deployment pipeline.
+- **Git history** — maintained a clean, conventional-commit history (`feat:` / `fix:` / `docs:`) with a genuine Red → Green → Refactor sequence for the core TDD suite.
 
 At the developer's explicit request, ongoing commits do not carry an AI co-author trailer.
