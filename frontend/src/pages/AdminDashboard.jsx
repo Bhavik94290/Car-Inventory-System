@@ -106,12 +106,39 @@ export default function AdminDashboard() {
     }
   }
 
+  const totalUnits = vehicles.reduce((sum, v) => sum + v.quantity, 0)
+  const outOfStockCount = vehicles.filter((v) => v.quantity === 0).length
+  const inventoryValue = vehicles.reduce((sum, v) => sum + Number(v.price) * v.quantity, 0)
+  const valueFmt = inventoryValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
+
   return (
-    <>
-      <section className="hero">
-        <h1>Admin dashboard</h1>
-        <p className="muted">Add, update, delete and restock inventory.</p>
+    <div className="admin-shell">
+      <section className="admin-header">
+        <div>
+          <span className="admin-eyebrow">Back office</span>
+          <h1>Admin Panel</h1>
+          <p className="muted">Add, update, delete and restock inventory.</p>
+        </div>
       </section>
+
+      <div className="stat-grid">
+        <div className="stat-card">
+          <span className="stat-label">Total vehicles</span>
+          <span className="stat-value">{vehicles.length}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Units in stock</span>
+          <span className="stat-value">{totalUnits}</span>
+        </div>
+        <div className="stat-card stat-card-warn">
+          <span className="stat-label">Out of stock</span>
+          <span className="stat-value">{outOfStockCount}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-label">Inventory value</span>
+          <span className="stat-value stat-value-sm">{valueFmt}</span>
+        </div>
+      </div>
 
       {message && <div className="alert alert-ok">{message}</div>}
       {error && <div className="alert">{error}</div>}
@@ -177,6 +204,6 @@ export default function AdminDashboard() {
           ))}
         </tbody>
       </table>
-    </>
+    </div>
   )
 }

@@ -1,28 +1,7 @@
-const CATEGORY_STYLES = {
-  SUV: { gradient: ['#0f5e63', '#123f42'], car: '#eaf6f4', emoji: '🚙' },
-  SEDAN: { gradient: ['#1e3a5f', '#0f2038'], car: '#eef2f9', emoji: '🚗' },
-  HATCHBACK: { gradient: ['#0e7490', '#083344'], car: '#e6fbff', emoji: '🚕' },
-  TRUCK: { gradient: ['#b45309', '#7c3a0a'], car: '#fff3e0', emoji: '🚚' },
-  PICKUP: { gradient: ['#b45309', '#7c3a0a'], car: '#fff3e0', emoji: '🚚' },
-  VAN: { gradient: ['#6d28d9', '#3f1f7a'], car: '#f3ecff', emoji: '🚐' },
-  MINIVAN: { gradient: ['#6d28d9', '#3f1f7a'], car: '#f3ecff', emoji: '🚐' },
-  ELECTRIC: { gradient: ['#15803d', '#0b4023'], car: '#eafff1', emoji: '⚡' },
-  EV: { gradient: ['#15803d', '#0b4023'], car: '#eafff1', emoji: '⚡' },
-  COUPE: { gradient: ['#b3362a', '#701f18'], car: '#ffecea', emoji: '🏎️' },
-  CONVERTIBLE: { gradient: ['#b3362a', '#701f18'], car: '#ffecea', emoji: '🏎️' },
-  SPORTS: { gradient: ['#b3362a', '#701f18'], car: '#ffecea', emoji: '🏎️' },
-  DEFAULT: { gradient: ['#5b6472', '#333941'], car: '#f3f4f5', emoji: '🚘' },
-}
-
-function resolveStyle(category) {
-  const key = (category || '').trim().toUpperCase()
-  if (CATEGORY_STYLES[key]) return CATEGORY_STYLES[key]
-  const found = Object.keys(CATEGORY_STYLES).find((k) => k !== 'DEFAULT' && key.includes(k))
-  return CATEGORY_STYLES[found] || CATEGORY_STYLES.DEFAULT
-}
+import { resolveCategoryStyle } from '../utils/categoryStyle.js'
 
 export default function CarIllustration({ category, className = '' }) {
-  const style = resolveStyle(category)
+  const style = resolveCategoryStyle(category)
 
   return (
     <div
