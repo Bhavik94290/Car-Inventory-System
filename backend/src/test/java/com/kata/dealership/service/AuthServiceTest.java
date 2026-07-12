@@ -1,11 +1,15 @@
 package com.kata.dealership.service;
 
 import com.kata.dealership.dto.AuthResponse;
+import com.kata.dealership.dto.ForgotPasswordRequest;
+import com.kata.dealership.dto.ForgotPasswordResponse;
 import com.kata.dealership.dto.LoginRequest;
 import com.kata.dealership.dto.RegisterRequest;
+import com.kata.dealership.dto.ResetPasswordRequest;
 import com.kata.dealership.entity.Role;
 import com.kata.dealership.entity.User;
 import com.kata.dealership.exception.DuplicateEmailException;
+import com.kata.dealership.exception.InvalidResetTokenException;
 import com.kata.dealership.repository.UserRepository;
 import com.kata.dealership.security.JwtService;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
@@ -117,5 +122,87 @@ class AuthServiceTest {
                 LoginRequest.builder().email("ravi@example.com").password("wrong").build()))
                 .isInstanceOf(BadCredentialsException.class);
         verify(jwtService, never()).generateToken(any(), anyMap());
+    }
+
+    @Test
+    @DisplayName("forgotPassword sets a reset token on the matching user")
+    void forgotPassword_existingEmail_setsResetToken() {
+        User user = User.builder()
+                .id("user_1").name("Ravi").email("ravi@example.com")
+                .password("$2a$hashed").role(Role.USER).build();
+
+        when(userRepository.findByEmail("ravi@example.com")).thenReturn(Optional.of(user));
+
+        ForgotPasswordResponse response = authService.forgotPassword(
+                ForgotPasswordRequest.builder().email("ravi@example.com").build());
+
+        assertThat(response.getMessage()).isNotBlank();
+        assertThat(response.getResetToken()).isNotBlank();
+        verify(userRepository).save(argThat(u ->
+                u.getResetToken() != null
+                        && u.getResetTokenExpiresAt() != null
+                        && u.getResetTokenExpiresAt().isAfter(Instant.now())));
+    }
+
+    @Test
+    @DisplayName("forgotPassword for an unknown email returns the same generic response without saving")
+    void forgotPassword_unknownEmail_doesNotSave() {
+        when(userRepository.findByEmail("nobody@example.com")).thenReturn(Optional.empty());
+
+        ForgotPasswordResponse response = authService.forgotPassword(
+                ForgotPasswordRequest.builder().email("nobody@example.com").build());
+
+        assertThat(response.getMessage()).isNotBlank();
+        assertThat(response.getResetToken()).isNull();
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("resetPassword updates the password and clears the token for a valid token")
+    void resetPassword_validToken_updatesPassword() {
+        User user = User.builder()
+                .id("user_1").name("Ravi").email("ravi@example.com")
+                .password("$2a$oldhash").role(Role.USER)
+                .resetToken("valid-token").resetTokenExpiresAt(Instant.now().plusSeconds(600))
+                .build();
+
+        when(userRepository.findByResetToken("valid-token")).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("NewPass123!")).thenReturn("$2a$newhash");
+
+        authService.resetPassword(ResetPasswordRequest.builder()
+                .token("valid-token").newPassword("NewPass123!").build());
+
+        verify(userRepository).save(argThat(u ->
+                u.getPassword().equals("$2a$newhash")
+                        && u.getResetToken() == null
+                        && u.getResetTokenExpiresAt() == null));
+    }
+
+    @Test
+    @DisplayName("resetPassword rejects an unknown token")
+    void resetPassword_unknownToken_throws() {
+        when(userRepository.findByResetToken("bogus")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.resetPassword(ResetPasswordRequest.builder()
+                .token("bogus").newPassword("NewPass123!").build()))
+                .isInstanceOf(InvalidResetTokenException.class);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("resetPassword rejects an expired token")
+    void resetPassword_expiredToken_throws() {
+        User user = User.builder()
+                .id("user_1").name("Ravi").email("ravi@example.com")
+                .password("$2a$oldhash").role(Role.USER)
+                .resetToken("expired-token").resetTokenExpiresAt(Instant.now().minusSeconds(60))
+                .build();
+
+        when(userRepository.findByResetToken("expired-token")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> authService.resetPassword(ResetPasswordRequest.builder()
+                .token("expired-token").newPassword("NewPass123!").build()))
+                .isInstanceOf(InvalidResetTokenException.class);
+        verify(userRepository, never()).save(any());
     }
 }

@@ -3,6 +3,8 @@ package com.kata.dealership.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "users")
 @Getter @Setter
@@ -24,4 +26,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @Column(unique = true)
+    private String resetToken;
+
+    private Instant resetTokenExpiresAt;
 }
