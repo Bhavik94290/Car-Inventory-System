@@ -9,6 +9,7 @@ Shoppers can register, log in, browse and search cars, view full vehicle details
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Running the backend](#running-the-backend) / [frontend](#running-the-frontend)
+- [Deployment](#deployment) — Netlify + Render
 - [API reference](#api-reference)
 - [TDD approach](#tdd-approach-red--green--refactor)
 - [Feature checklist](#feature-checklist)
@@ -157,6 +158,25 @@ npm install
 npm run dev
 ```
 Open `http://localhost:5173`. CORS is preconfigured for this origin.
+
+---
+
+## Deployment
+
+The frontend and backend deploy to **different** platforms — Netlify only hosts static sites, it can't run a persistent Spring Boot process or a database. This repo is preconfigured (`netlify.toml`, `render.yaml`) for **Netlify (frontend) + Render (backend)**, plus a separately-hosted MySQL database since Render's own managed database product is Postgres, not MySQL.
+
+1. **Database.** Provision MySQL on a host of your choice (e.g. Aiven, Railway, Clever Cloud) and note its connection details — host, port, database name, username, password.
+2. **Backend (Render).** Push this repo to GitHub, then on Render: **New → Blueprint**, connect the repo — it reads `render.yaml` automatically. Fill in the requested environment variables:
+   - `DB_URL` — full JDBC URL, e.g. `jdbc:mysql://<host>:<port>/<db>?useSSL=true`
+   - `DB_USERNAME`, `DB_PASSWORD` — from step 1
+   - `JWT_SECRET` — a long random string
+   - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `ANTHROPIC_API_KEY`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` — same values as your local `.env`
+   - `CORS_ALLOWED_ORIGINS` — leave for now, set after step 3
+   Deploy, then note the resulting `https://<your-service>.onrender.com` URL.
+3. **Frontend (Netlify).** **Add new site → Import from Git**, select the repo — Netlify auto-detects `netlify.toml` (builds from `frontend/`, publishes `dist/`). Add one build environment variable: `VITE_API_BASE_URL = https://<your-render-url>/api`. Deploy, then note the resulting `https://<your-site>.netlify.app` URL.
+4. **Close the loop.** Back on Render, set `CORS_ALLOWED_ORIGINS` to that Netlify URL (comma-separated if you want to keep local origins too) and redeploy.
+
+**Known limitations of this setup:** Render's free web service disk is ephemeral, so admin-uploaded vehicle photos (`/uploads/vehicles`) won't survive a redeploy or restart — fine for a demo, but a real deployment would need S3/Cloudinary-style storage instead. The free tier also spins down after inactivity, so the first request after idling can take 30–60s to wake up.
 
 ---
 
