@@ -63,7 +63,7 @@ a { color: var(--petrol); font-weight: 600; text-decoration: none; }
 a:hover { color: var(--signal); text-decoration: underline; }
 
 /* ---------- layout ---------- */
-.page { max-width: 1080px; margin: 0 auto; padding: 32px 24px 80px; }
+.page { max-width: 1400px; margin: 0 auto; padding: 32px 24px 80px; }
 .muted { color: var(--steel); }
 .small { font-size: 0.85rem; }
 
@@ -230,7 +230,13 @@ label input, label select { margin-top: 5px; }
 .stock-in { background: var(--ok-bg); color: var(--ok-ink); }
 .stock-out { background: var(--err-bg); color: var(--danger); }
 
-.car-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+/* The image + category/title/price are wrapped in a Link through to the
+   detail page; neutralize the global link color/underline so the card's own
+   text colors (make in --ink, model in --petrol) still apply untouched. */
+.car-card-link { display: block; color: inherit; text-decoration: none; }
+.car-card-link:hover { color: inherit; text-decoration: none; }
+.car-card-link-text { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 8px; }
+.car-card-body { padding: 8px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
 .car-category {
   display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
   font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
@@ -239,6 +245,38 @@ label input, label select { margin-top: 5px; }
 .car-title { font-family: var(--display); font-weight: 700; font-size: 1.25rem; margin: 0; }
 .car-title span { color: var(--petrol); }
 .car-price { font-family: var(--display); font-weight: 800; font-size: 1.35rem; margin-bottom: 4px; }
+
+/* ---------- vehicle detail page ---------- */
+.back-link { display: inline-block; margin-bottom: 18px; }
+.vehicle-detail {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  background: var(--panel-raised); border-radius: var(--radius-lg);
+  padding: 28px; box-shadow: var(--shadow-md);
+}
+.vehicle-detail-media {
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+  border-radius: var(--radius); background: #e9edf1;
+}
+.vehicle-detail-media img, .vehicle-detail-media .car-illustration { width: 100%; height: 100%; }
+.vehicle-detail-media img { object-fit: cover; display: block; }
+.vehicle-detail-info { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.vehicle-detail-info .car-title { font-size: 1.8rem; }
+.vehicle-detail-info .car-price { font-size: 1.6rem; }
+.vehicle-detail-info .cart-controls { width: 100%; max-width: 320px; margin-top: 6px; }
+.vehicle-detail-specs {
+  list-style: none; margin: 4px 0 0; padding: 0; width: 100%;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.vehicle-detail-specs li {
+  background: var(--paper); border-radius: var(--radius); padding: 10px 14px;
+}
+.vehicle-detail-specs span {
+  display: block; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel);
+}
+.vehicle-detail-specs strong { font-family: var(--display); font-size: 1.05rem; }
+@media (max-width: 780px) {
+  .vehicle-detail { grid-template-columns: 1fr; }
+}
 
 /* ---------- hero stats ---------- */
 .hero-stats { position: relative; display: flex; gap: 28px; margin-top: 18px; flex-wrap: wrap; }

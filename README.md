@@ -56,8 +56,8 @@ AI_Kata_Car_Dealership_Inventory_System/
         ├── context/             # AuthContext, CartContext (syncs with live prices/stock)
         ├── components/          # Navbar, SearchBar, CategoryChips, VehicleCard, CarIllustration, ChatWidget, ErrorBoundary
         ├── utils/                # categoryStyle.js (shared category colors), receipt.js (PDF generation)
-        └── pages/                # Login, Register, ForgotPassword, ResetPassword, Home, AdminDashboard,
-                                   # CartPage, CheckoutPage, OrdersPage
+        └── pages/                # Login, Register, ForgotPassword, ResetPassword, Home, VehicleDetail,
+                                   # AdminDashboard, CartPage, CheckoutPage, OrdersPage
 ```
 
 ---
@@ -108,13 +108,14 @@ Open `http://localhost:5173`. CORS is preconfigured for this origin.
 
 ## API reference
 
-### Auth (public)
-| Method | Endpoint             | Body                              | Notes |
-|--------|----------------------|-----------------------------------|-------|
-| POST   | `/api/auth/register` | `{name, email, password, role?}`  | `role` optional: `USER` (default) / `ADMIN`. Password needs 8+ chars, upper/lower/digit/symbol. Returns JWT. |
-| POST   | `/api/auth/login`    | `{email, password}`               | Returns JWT + user info. |
-| POST   | `/api/auth/forgot-password` | `{email}`                   | Always returns the same generic message (no email enumeration). Since no mail server is configured, the reset link/token is also returned directly in the response for this demo. |
-| POST   | `/api/auth/reset-password`  | `{token, newPassword}`      | Token is valid for 30 minutes and single-use. Returns **400** if invalid/expired. |
+### Auth
+| Method | Endpoint             | Access    | Body                              | Notes |
+|--------|----------------------|-----------|------------------------------------|-------|
+| POST   | `/api/auth/register` | Public    | `{name, email, password}`         | Always creates a **USER** account — there is no way to self-register as admin. Password needs 8+ chars, upper/lower/digit/symbol. Returns JWT. |
+| POST   | `/api/auth/register-admin` | **ADMIN** | `{name, email, password}`   | Creates a new **ADMIN** account. Only an already-authenticated admin can call this (`Authorization: Bearer <adminToken>`). Returns `{name, email, role}` — no token, since it's not a login for the new account. |
+| POST   | `/api/auth/login`    | Public    | `{email, password}`               | Returns JWT + user info. |
+| POST   | `/api/auth/forgot-password` | Public | `{email}`                    | Always returns the same generic message (no email enumeration). Since no mail server is configured, the reset link/token is also returned directly in the response for this demo. |
+| POST   | `/api/auth/reset-password`  | Public | `{token, newPassword}`       | Token is valid for 30 minutes and single-use. Returns **400** if invalid/expired. |
 
 ### Vehicles
 | Method | Endpoint                      | Access      | Notes |
@@ -168,7 +169,7 @@ The core business rules were driven by tests written **before** the implementati
 3. **Refactor** — extract exceptions, add `@Transactional`, clean up while tests stay green.
 
 Covered by the suite (`mvn test`):
-- Auth: register works, register as admin, duplicate email rejected, login works, wrong credentials rejected, forgot-password issues/omits a reset token correctly (no email enumeration), reset-password updates the password for a valid token and rejects unknown/expired tokens.
+- Auth: register always creates a USER and returns a token, `registerAdmin` (admin-only endpoint) creates an ADMIN account, duplicate email rejected, login works, wrong credentials rejected, forgot-password issues/omits a reset token correctly (no email enumeration), reset-password updates the password for a valid token and rejects unknown/expired tokens.
 - Vehicles: add, get all, search (with pagination, sorting and the in-stock-only filter), update, update-not-found, delete, delete-not-found.
 - Inventory: purchase decrements quantity, purchase fails at 0 stock, restock increments quantity, restock rejects non-positive amounts.
 
@@ -180,14 +181,15 @@ Covered by the suite (`mvn test`):
 
 - [x] Register / Login with JWT (password policy: 8+ chars, upper/lower/digit/symbol)
 - [x] Forgot / reset password flow
-- [x] Roles: USER and ADMIN (Spring Security route rules + `@EnableMethodSecurity`)
+- [x] Roles: USER and ADMIN (Spring Security route rules + `@EnableMethodSecurity`). Public registration always creates a USER; only an existing admin can create another admin, via the Admin Panel's "Create Admin" form
 - [x] View all cars, search/filter/sort/paginate by make / model / category / price range / in-stock-only, plus one-click category chips
-- [x] Purchase directly, or add to cart and pay via Razorpay checkout (signature-verified)
+- [x] Vehicle detail page — click any car in the showroom (or a chat assistant result) to see its full details and specs on its own page
+- [x] Purchase directly, or add to cart and pay via Razorpay checkout (signature-verified). Cart/checkout require being logged in as a non-admin user
 - [x] Downloadable PDF receipt after checkout, and for any past order
 - [x] Order history per user
 - [x] Admin: separate dark dashboard with live inventory stats (total vehicles, units in stock, out of stock, inventory value); add / update / delete / restock vehicles, with photo upload; no cart access
 - [x] AI chat assistant (Claude) for vehicle search and order lookup
-- [x] Site-wide dark theme
+- [x] Site-wide dark theme with Material-inspired elevated cards
 - [x] Persistent MySQL storage via Spring Data JPA
 - [x] Validation + global exception handling with clean JSON errors
 - [x] TDD unit tests with JUnit 5 + Mockito

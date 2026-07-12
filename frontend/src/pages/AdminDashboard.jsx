@@ -238,10 +238,12 @@ export default function AdminDashboard() {
               <td>{v.category}</td>
               <td>{Number(v.price).toLocaleString('en-IN')}</td>
               <td>{v.quantity === 0 ? <strong>0 · out</strong> : v.quantity}</td>
-              <td className="row-actions">
-                <button className="btn btn-mini" onClick={() => startEdit(v)}>Edit</button>
-                <button className="btn btn-mini" onClick={() => handleRestock(v.id)}>Restock</button>
-                <button className="btn btn-mini btn-danger" onClick={() => handleDelete(v.id)}>Delete</button>
+              <td>
+                <div className="row-actions">
+                  <button className="btn btn-mini" onClick={() => startEdit(v)}>Edit</button>
+                  <button className="btn btn-mini" onClick={() => handleRestock(v.id)}>Restock</button>
+                  <button className="btn btn-mini btn-danger" onClick={() => handleDelete(v.id)}>Delete</button>
+                </div>
               </td>
             </tr>
           ))}

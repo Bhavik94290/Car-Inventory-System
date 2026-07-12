@@ -7,6 +7,7 @@ import Register from './pages/Register.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import Home from './pages/Home.jsx'
+import VehicleDetail from './pages/VehicleDetail.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import CartPage from './pages/CartPage.jsx'
 import CheckoutPage from './pages/CheckoutPage.jsx'
@@ -38,6 +39,7 @@ export default function App() {
       <main className="page">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/vehicles/:id" element={<VehicleDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

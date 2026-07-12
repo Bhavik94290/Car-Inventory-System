@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "AI Kata Car Dealership Inventory System",
-    "description": "API collection for the Car Dealership Inventory System (Spring Boot backend). Register/login as ADMIN to use admin-only vehicle endpoints; register/login as USER for purchase, checkout and chat order lookup.",
+    "description": "API collection for the Car Dealership Inventory System (Spring Boot backend). Public /register always creates a USER; log in as an existing admin and use 'Create Admin (admin-only)' to make more admins. Register/login as USER for purchase, checkout and chat order lookup.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -45,26 +45,29 @@
           ]
         },
         {
-          "name": "Register (ADMIN)",
+          "name": "Create Admin (admin-only)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"ADMIN\"\n}"
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+            "url": { "raw": "{{baseUrl}}/api/auth/register-admin", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register-admin"] }
           },
+          "description": "Public registration always creates a USER now — there is no self-service way to become ADMIN. This endpoint creates a new admin account, but only an already-authenticated ADMIN may call it (requires {{adminToken}} — see comment below). Returns {name, email, role}, no token (it's not a login for the new account).",
           "event": [
             {
-              "listen": "test",
+              "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "if (pm.response.code === 201) {",
-                  "    const json = pm.response.json();",
-                  "    pm.collectionVariables.set('adminToken', json.token);",
-                  "}"
+                  "// {{adminToken}} must already be set from a prior Login as an existing admin.",
+                  "// There's no bootstrap endpoint for the very first admin — that account is",
+                  "// created directly in the database (see VehicleDataSeeder / README)."
                 ]
               }
             }

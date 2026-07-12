@@ -64,7 +64,7 @@ export default function ChatWidget() {
                 {m.vehicles?.length > 0 && (
                   <div className="chat-vehicle-list">
                     {m.vehicles.map((v) => (
-                      <Link to="/" key={v.id} className="chat-vehicle-card">
+                      <Link to={`/vehicles/${v.id}`} key={v.id} className="chat-vehicle-card">
                         <div className="chat-vehicle-thumb">
                           <CarIllustration category={v.category} />
                         </div>

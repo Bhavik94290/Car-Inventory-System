@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import CarIllustration from './CarIllustration.jsx'
 import { useCart } from '../context/CartContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -26,26 +27,30 @@ export default function VehicleCard({ vehicle }) {
 
   return (
     <article className={`car-card ${outOfStock ? 'sold-out' : ''}`}>
-      <div className="car-media">
-        {showImage ? (
-          <img
-            src={vehicle.imageUrl}
-            alt={`${vehicle.make} ${vehicle.model}`}
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <CarIllustration category={vehicle.category} />
-        )}
-        <span className={`stock-pill stock-pill-media ${outOfStock ? 'stock-out' : 'stock-in'}`}>
-          {outOfStock ? 'Out of stock' : `${vehicle.quantity} in stock`}
-        </span>
-      </div>
+      <Link to={`/vehicles/${vehicle.id}`} className="car-card-link">
+        <div className="car-media">
+          {showImage ? (
+            <img
+              src={vehicle.imageUrl}
+              alt={`${vehicle.make} ${vehicle.model}`}
+              onError={() => setImgFailed(true)}
+            />
+          ) : (
+            <CarIllustration category={vehicle.category} />
+          )}
+          <span className={`stock-pill stock-pill-media ${outOfStock ? 'stock-out' : 'stock-in'}`}>
+            {outOfStock ? 'Out of stock' : `${vehicle.quantity} in stock`}
+          </span>
+        </div>
+        <div className="car-card-link-text">
+          <span className="car-category" style={{ color: categoryStyle.accent, background: `${categoryStyle.accent}1a` }}>
+            {categoryStyle.emoji} {vehicle.category}
+          </span>
+          <h3 className="car-title">{vehicle.make} <span>{vehicle.model}</span></h3>
+          <div className="car-price">{priceFmt}</div>
+        </div>
+      </Link>
       <div className="car-card-body">
-        <span className="car-category" style={{ color: categoryStyle.accent, background: `${categoryStyle.accent}1a` }}>
-          {categoryStyle.emoji} {vehicle.category}
-        </span>
-        <h3 className="car-title">{vehicle.make} <span>{vehicle.model}</span></h3>
-        <div className="car-price">{priceFmt}</div>
         {isAdmin ? (
           <p className="muted small">Manage this vehicle from the Admin Dashboard.</p>
         ) : outOfStock ? (
