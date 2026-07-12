@@ -22,7 +22,7 @@ Users can register, log in (with a "forgot password" flow), browse and search ca
 
 | Layer    | Technology |
 |----------|------------|
-| Backend  | Java 17, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security, JWT (jjwt), Lombok, Validation, DevTools (auto-restart) |
+| Backend  | Java 17, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security, JWT (jjwt), Spring Mail (Gmail SMTP), Lombok, Validation, DevTools (auto-restart) |
 | Database | MySQL 8 (H2 in-memory used for tests) |
 | Payments | Razorpay (Orders API + HMAC-SHA256 payment signature verification) |
 | AI       | Claude (Anthropic Java SDK) — tool-use chat assistant |
@@ -56,7 +56,7 @@ AI_Kata_Car_Dealership_Inventory_System/
         ├── context/             # AuthContext, CartContext (syncs with live prices/stock)
         ├── components/          # Navbar, SearchBar, CategoryChips, VehicleCard, CarIllustration, ChatWidget, ErrorBoundary
         ├── utils/                # categoryStyle.js (shared category colors), receipt.js (PDF generation)
-        └── pages/                # Login, Register, ForgotPassword, ResetPassword, Home, VehicleDetail,
+        └── pages/                # Login, Register, ForgotPassword (combined OTP + reset), Home, VehicleDetail,
                                    # AdminDashboard, CartPage, CheckoutPage, OrdersPage
 ```
 
@@ -77,11 +77,14 @@ AI_Kata_Car_Dealership_Inventory_System/
    RAZORPAY_KEY_ID=<from https://dashboard.razorpay.com/app/keys>
    RAZORPAY_KEY_SECRET=<from the same page>
    ANTHROPIC_API_KEY=<from https://console.anthropic.com/settings/keys>
+   MAIL_USERNAME=<your Gmail address, for password-reset OTP emails>
+   MAIL_PASSWORD=<a Google App Password from https://myaccount.google.com/apppasswords>
+   MAIL_FROM=<defaults to MAIL_USERNAME if unset>
    UPLOAD_DIR=uploads/vehicles   # optional, defaults shown
    ```
    (Plain shell environment variables work too, if you'd rather not use the `.env` file.)
 
-   Checkout, payment verification, and the chat assistant won't work without valid Razorpay/Anthropic keys — everything else (browsing, auth, admin CRUD) works fine without them. Razorpay also enforces its own per-transaction amount limit on new/unactivated accounts (commonly ₹5,00,000) — the seed data is priced to stay well under that.
+   Checkout, payment verification, the chat assistant, and forgot-password emails won't work without valid Razorpay/Anthropic/Gmail credentials — everything else (browsing, auth, admin CRUD) works fine without them. Razorpay also enforces its own per-transaction amount limit on new/unactivated accounts (commonly ₹5,00,000) — the seed data is priced to stay well under that. Gmail SMTP requires 2-Step Verification enabled on the account before an App Password can be generated.
 4. Start the API:
    ```bash
    cd backend
@@ -114,8 +117,8 @@ Open `http://localhost:5173`. CORS is preconfigured for this origin.
 | POST   | `/api/auth/register` | Public    | `{name, email, password}`         | Always creates a **USER** account — there is no way to self-register as admin. Password needs 8+ chars, upper/lower/digit/symbol. Returns JWT. |
 | POST   | `/api/auth/register-admin` | **ADMIN** | `{name, email, password}`   | Creates a new **ADMIN** account. Only an already-authenticated admin can call this (`Authorization: Bearer <adminToken>`). Returns `{name, email, role}` — no token, since it's not a login for the new account. |
 | POST   | `/api/auth/login`    | Public    | `{email, password}`               | Returns JWT + user info. |
-| POST   | `/api/auth/forgot-password` | Public | `{email}`                    | Always returns the same generic message (no email enumeration). Since no mail server is configured, the reset link/token is also returned directly in the response for this demo. |
-| POST   | `/api/auth/reset-password`  | Public | `{token, newPassword}`       | Token is valid for 30 minutes and single-use. Returns **400** if invalid/expired. |
+| POST   | `/api/auth/forgot-password` | Public | `{email}`                    | Always returns the same generic message (no email enumeration). Emails a 6-digit OTP via Gmail SMTP if the address is registered. |
+| POST   | `/api/auth/reset-password`  | Public | `{email, otp, newPassword}`  | OTP is valid for 10 minutes and single-use. Returns **400** if the email/OTP pair is invalid or expired. |
 
 ### Vehicles
 | Method | Endpoint                      | Access      | Notes |
@@ -169,7 +172,7 @@ The core business rules were driven by tests written **before** the implementati
 3. **Refactor** — extract exceptions, add `@Transactional`, clean up while tests stay green.
 
 Covered by the suite (`mvn test`):
-- Auth: register always creates a USER and returns a token, `registerAdmin` (admin-only endpoint) creates an ADMIN account, duplicate email rejected, login works, wrong credentials rejected, forgot-password issues/omits a reset token correctly (no email enumeration), reset-password updates the password for a valid token and rejects unknown/expired tokens.
+- Auth: register always creates a USER and returns a token, `registerAdmin` (admin-only endpoint) creates an ADMIN account, duplicate email rejected, login works, wrong credentials rejected, forgot-password emails a 6-digit OTP without leaking whether the email exists, reset-password updates the password for a valid OTP and rejects wrong/unknown-email/expired OTPs.
 - Vehicles: add, get all, search (with pagination, sorting and the in-stock-only filter), update, update-not-found, delete, delete-not-found.
 - Inventory: purchase decrements quantity, purchase fails at 0 stock, restock increments quantity, restock rejects non-positive amounts.
 
@@ -180,7 +183,7 @@ Covered by the suite (`mvn test`):
 ## Feature checklist
 
 - [x] Register / Login with JWT (password policy: 8+ chars, upper/lower/digit/symbol)
-- [x] Forgot / reset password flow
+- [x] Forgot / reset password flow with a real 6-digit OTP emailed via Gmail SMTP
 - [x] Roles: USER and ADMIN (Spring Security route rules + `@EnableMethodSecurity`). Public registration always creates a USER; only an existing admin can create another admin, via the Admin Panel's "Create Admin" form
 - [x] View all cars, search/filter/sort/paginate by make / model / category / price range / in-stock-only, plus one-click category chips
 - [x] Vehicle detail page — click any car in the showroom (or a chat assistant result) to see its full details and specs on its own page

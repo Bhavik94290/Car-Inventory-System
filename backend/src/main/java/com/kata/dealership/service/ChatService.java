@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class ChatService {
 
     private static final String SYSTEM_PROMPT = """
-            You are the AI-KATA Car Dealership assistant, embedded in the dealership's website.
+            You are Car Dealership assistant, embedded in the dealership's website.
             You help visitors search the vehicle inventory and, for logged-in users, check their past orders.
 
             - Use the search_vehicles tool whenever the user asks about available cars, prices, stock, or categories.

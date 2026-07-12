@@ -21,25 +21,28 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final long RESET_TOKEN_VALIDITY_MINUTES = 30;
+    private static final long OTP_VALIDITY_MINUTES = 10;
     private static final String FORGOT_PASSWORD_MESSAGE =
-            "If an account exists for that email, a password reset link has been sent.";
+            "If an account exists for that email, a password reset code has been sent.";
+
+    private final SecureRandom secureRandom = new SecureRandom();
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
 
     public AuthResponse register(RegisterRequest request) {
         return register(request, Role.USER);
@@ -97,21 +100,25 @@ public class AuthService {
         }
 
         User user = maybeUser.get();
-        String token = UUID.randomUUID().toString();
-        user.setResetToken(token);
-        user.setResetTokenExpiresAt(Instant.now().plus(RESET_TOKEN_VALIDITY_MINUTES, ChronoUnit.MINUTES));
+        String otp = generateOtp();
+        user.setResetToken(otp);
+        user.setResetTokenExpiresAt(Instant.now().plus(OTP_VALIDITY_MINUTES, ChronoUnit.MINUTES));
         userRepository.save(user);
 
-        return ForgotPasswordResponse.builder()
-                .message(FORGOT_PASSWORD_MESSAGE)
-                .resetToken(token)
-                .build();
+        emailService.sendPasswordResetOtp(user.getEmail(), otp);
+
+        return ForgotPasswordResponse.builder().message(FORGOT_PASSWORD_MESSAGE).build();
+    }
+
+    private String generateOtp() {
+        return String.format("%06d", secureRandom.nextInt(1_000_000));
     }
 
     public void resetPassword(ResetPasswordRequest request) {
-        User user = userRepository.findByResetToken(request.getToken())
+        User user = userRepository.findByEmail(request.getEmail())
+                .filter(u -> request.getOtp().equals(u.getResetToken()))
                 .filter(u -> u.getResetTokenExpiresAt() != null && u.getResetTokenExpiresAt().isAfter(Instant.now()))
-                .orElseThrow(() -> new InvalidResetTokenException("Reset link is invalid or has expired"));
+                .orElseThrow(() -> new InvalidResetTokenException("Reset code is invalid or has expired"));
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setResetToken(null);

@@ -63,7 +63,7 @@ export default function CheckoutPage() {
         amount: checkout.amount,
         currency: checkout.currency,
         order_id: checkout.razorpayOrderId,
-        name: 'AI·KATA Car Dealership',
+        name: 'Car Dealership Inventory',
         description: `${items.length} vehicle${items.length === 1 ? '' : 's'}`,
         prefill: { name: user.name, email: user.email },
         theme: { color: '#0f5e63' },

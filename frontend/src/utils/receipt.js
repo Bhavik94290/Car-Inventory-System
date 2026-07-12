@@ -27,7 +27,7 @@ export function downloadReceipt(order, user) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(20)
   doc.setTextColor('#0f5e63')
-  doc.text('AI·KATA Car Dealership', MARGIN_X, y)
+  doc.text('Car Dealership Inventory', MARGIN_X, y)
 
   y += 20
   doc.setFont('helvetica', 'normal')

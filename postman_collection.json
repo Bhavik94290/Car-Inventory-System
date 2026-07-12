@@ -9,7 +9,6 @@
     { "key": "token", "value": "", "type": "string" },
     { "key": "adminToken", "value": "", "type": "string" },
     { "key": "vehicleId", "value": "vehicle_example", "type": "string" },
-    { "key": "resetToken", "value": "", "type": "string" },
     { "key": "imageUrl", "value": "", "type": "string" },
     { "key": "orderId", "value": "", "type": "string" },
     { "key": "razorpayOrderId", "value": "", "type": "string" }
@@ -111,21 +110,7 @@
             },
             "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "forgot-password"] }
           },
-          "description": "Always returns the same generic message whether or not the email is registered (no enumeration). No email server is configured for this project, so the reset token is also returned directly in the response for testing purposes.",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "if (pm.response.code === 200) {",
-                  "    const json = pm.response.json();",
-                  "    if (json.resetToken) { pm.collectionVariables.set('resetToken', json.resetToken); }",
-                  "}"
-                ]
-              }
-            }
-          ]
+          "description": "Always returns the same generic message whether or not the email is registered (no enumeration). If the email exists, a 6-digit OTP is sent to it via Gmail SMTP (requires MAIL_USERNAME/MAIL_PASSWORD configured in backend/.env) — check that inbox and paste the code into the Reset Password request below."
         },
         {
           "name": "Reset Password",
@@ -134,11 +119,11 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+              "raw": "{\n  \"email\": \"jane.doe@example.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"NewPassword123!\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "reset-password"] }
           },
-          "description": "Run 'Forgot Password' first so {{resetToken}} is populated. The token is single-use and expires after 30 minutes; reusing it or a stale token returns 400."
+          "description": "Run 'Forgot Password' first, then replace the otp value above with the 6-digit code emailed to that address. The code is single-use and expires after 10 minutes; reusing it or a stale/wrong code returns 400."
         }
       ]
     },

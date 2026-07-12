@@ -27,7 +27,8 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @Column(unique = true)
+    // Holds a 6-digit OTP (not a unique token), so no uniqueness constraint —
+    // different users can legitimately be issued the same code at once.
     private String resetToken;
 
     private Instant resetTokenExpiresAt;
