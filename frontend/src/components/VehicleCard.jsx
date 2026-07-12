@@ -1,30 +1,68 @@
-export default function VehicleCard({ vehicle, canPurchase, onPurchase, purchasing }) {
+import { useState } from 'react'
+import CarIllustration from './CarIllustration.jsx'
+import { useCart } from '../context/CartContext.jsx'
+
+export default function VehicleCard({ vehicle }) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const [qty, setQty] = useState(1)
+  const [added, setAdded] = useState(false)
+  const { addToCart } = useCart()
+
   const outOfStock = vehicle.quantity === 0
+  const showImage = !!vehicle.imageUrl && !imgFailed
   const priceFmt = Number(vehicle.price).toLocaleString('en-IN', {
     style: 'currency', currency: 'INR', maximumFractionDigits: 0,
   })
 
+  const handleAdd = () => {
+    addToCart(vehicle, qty)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+  }
+
   return (
     <article className={`car-card ${outOfStock ? 'sold-out' : ''}`}>
-      <div className="car-card-top">
-        <span className="car-category">{vehicle.category}</span>
-        <span className={`stock-pill ${outOfStock ? 'stock-out' : 'stock-in'}`}>
+      <div className="car-media">
+        {showImage ? (
+          <img
+            src={vehicle.imageUrl}
+            alt={`${vehicle.make} ${vehicle.model}`}
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <CarIllustration category={vehicle.category} />
+        )}
+        <span className={`stock-pill stock-pill-media ${outOfStock ? 'stock-out' : 'stock-in'}`}>
           {outOfStock ? 'Out of stock' : `${vehicle.quantity} in stock`}
         </span>
       </div>
-      <h3 className="car-title">{vehicle.make} <span>{vehicle.model}</span></h3>
-      <div className="car-price">{priceFmt}</div>
-      {canPurchase ? (
-        <button
-          className="btn btn-solid btn-block"
-          disabled={outOfStock || purchasing}
-          onClick={() => onPurchase(vehicle.id)}
-        >
-          {outOfStock ? 'Out of stock' : purchasing ? 'Purchasing…' : 'Purchase'}
-        </button>
-      ) : (
-        <p className="muted small">Log in to purchase</p>
-      )}
+      <div className="car-card-body">
+        <span className="car-category">{vehicle.category}</span>
+        <h3 className="car-title">{vehicle.make} <span>{vehicle.model}</span></h3>
+        <div className="car-price">{priceFmt}</div>
+        {outOfStock ? (
+          <p className="muted small">Currently unavailable</p>
+        ) : (
+          <div className="cart-controls">
+            <div className="qty-stepper">
+              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1}>
+                −
+              </button>
+              <span>{qty}</span>
+              <button
+                type="button"
+                onClick={() => setQty((q) => Math.min(vehicle.quantity, q + 1))}
+                disabled={qty >= vehicle.quantity}
+              >
+                +
+              </button>
+            </div>
+            <button className="btn btn-solid btn-block" onClick={handleAdd}>
+              {added ? 'Added ✓' : 'Add to Cart'}
+            </button>
+          </div>
+        )}
+      </div>
     </article>
   )
 }
