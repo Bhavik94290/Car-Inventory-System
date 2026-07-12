@@ -39,6 +39,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body(HttpStatus.CONFLICT, ex.getMessage()));
     }
 
+    @ExceptionHandler(PaymentVerificationException.class)
+    public ResponseEntity<Map<String, Object>> paymentVerification(PaymentVerificationException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(body(HttpStatus.PAYMENT_REQUIRED, ex.getMessage()));
+    }
+
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<Map<String, Object>> paymentGateway(PaymentGatewayException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body(HttpStatus.BAD_GATEWAY, ex.getMessage()));
+    }
+
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<Map<String, Object>> fileStorage(FileStorageException ex) {
         return ResponseEntity.badRequest().body(body(HttpStatus.BAD_REQUEST, ex.getMessage()));
