@@ -8,6 +8,7 @@ import com.kata.dealership.entity.User;
 import com.kata.dealership.exception.DuplicateEmailException;
 import com.kata.dealership.repository.UserRepository;
 import com.kata.dealership.security.JwtService;
+import com.kata.dealership.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,6 +36,7 @@ public class AuthService {
         Role role = "ADMIN".equalsIgnoreCase(request.getRole()) ? Role.ADMIN : Role.USER;
 
         User user = User.builder()
+                .id(IdGenerator.generate("user"))
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))

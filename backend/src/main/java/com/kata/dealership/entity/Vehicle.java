@@ -3,16 +3,21 @@ package com.kata.dealership.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Entity
-@Table(name = "vehicles")
+@Table(name = "vehicles", indexes = {
+        @Index(name = "idx_vehicle_make", columnList = "make"),
+        @Index(name = "idx_vehicle_model", columnList = "model"),
+        @Index(name = "idx_vehicle_category", columnList = "category"),
+        @Index(name = "idx_vehicle_price", columnList = "price"),
+})
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 public class Vehicle {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @Column(nullable = false)
     private String make;
@@ -28,4 +33,7 @@ public class Vehicle {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    @Column(nullable = false)
+    private Instant createdAt;
 }

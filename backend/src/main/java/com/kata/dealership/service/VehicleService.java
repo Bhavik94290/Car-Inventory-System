@@ -5,11 +5,15 @@ import com.kata.dealership.entity.Vehicle;
 import com.kata.dealership.exception.OutOfStockException;
 import com.kata.dealership.exception.ResourceNotFoundException;
 import com.kata.dealership.repository.VehicleRepository;
+import com.kata.dealership.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -20,11 +24,13 @@ public class VehicleService {
 
     public Vehicle addVehicle(VehicleRequest request) {
         Vehicle vehicle = Vehicle.builder()
+                .id(IdGenerator.generate("vehicle"))
                 .make(request.getMake())
                 .model(request.getModel())
                 .category(request.getCategory())
                 .price(request.getPrice())
                 .quantity(request.getQuantity())
+                .createdAt(Instant.now())
                 .build();
         return vehicleRepository.save(vehicle);
     }
@@ -33,18 +39,19 @@ public class VehicleService {
         return vehicleRepository.findAll();
     }
 
-    public Vehicle getVehicle(Long id) {
+    public Vehicle getVehicle(String id) {
         return vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with id: " + id));
     }
 
-    public List<Vehicle> search(String make, String model, String category,
-                                BigDecimal minPrice, BigDecimal maxPrice) {
+    public Page<Vehicle> search(String make, String model, String category,
+                                BigDecimal minPrice, BigDecimal maxPrice,
+                                boolean inStockOnly, Pageable pageable) {
         return vehicleRepository.search(emptyToNull(make), emptyToNull(model),
-                emptyToNull(category), minPrice, maxPrice);
+                emptyToNull(category), minPrice, maxPrice, inStockOnly, pageable);
     }
 
-    public Vehicle updateVehicle(Long id, VehicleRequest request) {
+    public Vehicle updateVehicle(String id, VehicleRequest request) {
         Vehicle vehicle = getVehicle(id);
         vehicle.setMake(request.getMake());
         vehicle.setModel(request.getModel());
@@ -54,13 +61,13 @@ public class VehicleService {
         return vehicleRepository.save(vehicle);
     }
 
-    public void deleteVehicle(Long id) {
+    public void deleteVehicle(String id) {
         Vehicle vehicle = getVehicle(id);
         vehicleRepository.delete(vehicle);
     }
 
     @Transactional
-    public Vehicle purchase(Long id) {
+    public Vehicle purchase(String id) {
         Vehicle vehicle = getVehicle(id);
         if (vehicle.getQuantity() <= 0) {
             throw new OutOfStockException(
@@ -71,7 +78,7 @@ public class VehicleService {
     }
 
     @Transactional
-    public Vehicle restock(Long id, int amount) {
+    public Vehicle restock(String id, int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Restock amount must be positive");
         }

@@ -93,7 +93,7 @@ class AuthServiceTest {
     @DisplayName("login authenticates and returns a token for a valid user")
     void login_success_returnsToken() {
         User user = User.builder()
-                .id(1L).name("Ravi").email("ravi@example.com")
+                .id("user_1").name("Ravi").email("ravi@example.com")
                 .password("$2a$hashed").role(Role.USER).build();
 
         when(userRepository.findByEmail("ravi@example.com")).thenReturn(Optional.of(user));
