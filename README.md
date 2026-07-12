@@ -1,20 +1,71 @@
-# AI_Kata_Car_Dealership_Inventory_System
+# Car Dealership Inventory System
 
 A full-stack car dealership inventory system built with **Java Spring Boot** (backend), **React** (frontend) and **MySQL** — developed with a **TDD (Test-Driven Development)** approach.
 
-Users can register, log in (with a "forgot password" flow), browse and search cars, add them to a cart, and pay via **Razorpay** — with a downloadable **PDF receipt** afterward. Admins get a separate dark back-office dashboard to add, update, delete and restock vehicles, with photo uploads and live inventory stats. An **AI chat assistant** (Claude) helps visitors search inventory and check their own orders. Purchasing (directly or via checkout) decrements stock; when quantity hits 0, the Purchase/Add-to-Cart controls are disabled and the API rejects further purchases.
+Shoppers can register, log in, browse and search cars, view full vehicle details, add them to a cart, and pay via **Razorpay** — with a downloadable **PDF receipt** afterward. Admins get a separate dark back-office dashboard to add, update, delete and restock vehicles, with photo uploads and live inventory stats. Forgot your password? A real 6-digit code gets emailed to you. An **AI chat assistant** (Claude) helps visitors search inventory and check their own orders. Purchasing (directly or via checkout) decrements stock; when quantity hits 0, the Purchase/Add-to-Cart controls are disabled and the API rejects further purchases.
+
+### Contents
+- [App tour](#app-tour) — what it looks like, screen by screen
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Running the backend](#running-the-backend) / [frontend](#running-the-frontend)
+- [API reference](#api-reference)
+- [TDD approach](#tdd-approach-red--green--refactor)
+- [Feature checklist](#feature-checklist)
+- [My AI usage](#my-ai-usage)
 
 ---
 
-## Screenshots
+## App tour
 
-| Showroom (storefront) | Admin Panel |
+### 🔐 Create an account, log in, and recover a forgotten password
+Registration always creates a regular **USER** account — there's no way to self-register as admin. Forgot your password? Enter your email, get a real 6-digit code by email, and set a new password on the same screen.
+
+| Register | Log in |
 |---|---|
-| ![Showroom](docs/screenshots/showroom.png) | ![Admin Panel](docs/screenshots/admin-panel.png) |
+| ![Register](docs/screenshots/register.png) | ![Login](docs/screenshots/login.png) |
 
-| Login |
-|---|
-| ![Login](docs/screenshots/login.png) |
+| Request a code | Enter the code + new password |
+|---|---|
+| ![Forgot password](docs/screenshots/forgot-password.png) | ![Enter OTP](docs/screenshots/forgot-password-otp.png) |
+
+The code really does arrive by email (Gmail SMTP), not just an on-screen shortcut:
+
+![Password reset email](docs/screenshots/password-reset-email.png)
+
+### 🚘 Browse the showroom and drill into a vehicle
+Filter by make, model, category and price range, jump straight to a category with the quick-filter chips, or click any car for its own detail page with full specs.
+
+| Showroom | Vehicle detail |
+|---|---|
+| ![Showroom](docs/screenshots/showroom.png) | ![Vehicle detail](docs/screenshots/vehicle-detail.png) |
+
+Logged-out visitors can browse and view details freely, but see a clear **"Log in to add this to your cart"** prompt instead of cart controls — no silently-broken buttons.
+
+### 🛒 Cart, checkout, and secure payment
+Add vehicles to your cart, review the total, and pay through **Razorpay Checkout** (cards, netbanking, and more) — the payment signature is verified server-side before the order is marked paid.
+
+| Cart | Checkout | Razorpay payment |
+|---|---|---|
+| ![Cart](docs/screenshots/cart.png) | ![Checkout](docs/screenshots/checkout.png) | ![Razorpay payment](docs/screenshots/razorpay-payment.png) |
+
+![Payment successful](docs/screenshots/payment-success.png)
+
+### 📦 Order history & PDF receipts
+Every past order is listed with its status, and a one-click **PDF receipt** can be downloaded any time — for that order or straight off the payment-success screen.
+
+| My Orders | PDF receipt |
+|---|---|
+| ![My Orders](docs/screenshots/orders.png) | ![PDF receipt](docs/screenshots/receipt-pdf.png) |
+
+### 🛠️ Admin back office
+A separate dark dashboard with live inventory stats, full vehicle CRUD with photo upload, and the ability for an existing admin to create additional admin accounts — public registration can never do that itself.
+
+| Admin dashboard | Create another admin |
+|---|---|
+| ![Admin dashboard](docs/screenshots/admin-panel.png) | ![Create admin](docs/screenshots/admin-create-admin.png) |
+
+![Admin inventory table](docs/screenshots/admin-inventory-table.png)
 
 ---
 
