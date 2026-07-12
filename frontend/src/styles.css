@@ -273,6 +273,12 @@ label input, label select { margin-top: 5px; }
 }
 .inventory-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
 .inventory-table .row-out td { color: var(--danger); }
+/* Price and Qty are numeric — right-align so digits stack for easy scanning
+   (left-aligned numbers of different lengths, e.g. "9" vs "40", read poorly). */
+.inventory-table th:nth-child(6), .inventory-table td:nth-child(6),
+.inventory-table th:nth-child(7), .inventory-table td:nth-child(7) {
+  text-align: right;
+}
 .row-actions { display: flex; gap: 6px; }
 
 .table-thumb { width: 64px; padding: 8px 14px !important; }
