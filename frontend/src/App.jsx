@@ -25,6 +25,12 @@ function RequireAuth({ children }) {
   return children
 }
 
+function RequireNotAdmin({ children }) {
+  const { isAdmin } = useAuth()
+  if (isAdmin) return <Navigate to="/admin" replace />
+  return children
+}
+
 export default function App() {
   return (
     <>
@@ -36,8 +42,22 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route
+            path="/cart"
+            element={
+              <RequireNotAdmin>
+                <CartPage />
+              </RequireNotAdmin>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <RequireNotAdmin>
+                <CheckoutPage />
+              </RequireNotAdmin>
+            }
+          />
           <Route
             path="/orders"
             element={

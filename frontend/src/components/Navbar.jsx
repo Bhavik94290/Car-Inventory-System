@@ -24,12 +24,17 @@ export default function Navbar() {
       </Link>
       <nav className="nav-links">
         <Link to="/">Showroom</Link>
-        {user && <Link to="/orders">My Orders</Link>}
-        {isAdmin && <Link to="/admin">Admin</Link>}
-        <Link to="/cart" className="cart-link">
-          🛒 Cart
-          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-        </Link>
+        {isAdmin ? (
+          <Link to="/admin">Admin</Link>
+        ) : (
+          <>
+            {user && <Link to="/orders">My Orders</Link>}
+            <Link to="/cart" className="cart-link">
+              🛒 Cart
+              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+            </Link>
+          </>
+        )}
         {user ? (
           <>
             <span className="nav-user">

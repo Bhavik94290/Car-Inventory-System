@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import CarIllustration from './CarIllustration.jsx'
 import { useCart } from '../context/CartContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
 export default function VehicleCard({ vehicle }) {
   const [imgFailed, setImgFailed] = useState(false)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const { addToCart } = useCart()
+  const { isAdmin } = useAuth()
 
   const outOfStock = vehicle.quantity === 0
   const showImage = !!vehicle.imageUrl && !imgFailed
@@ -40,7 +42,9 @@ export default function VehicleCard({ vehicle }) {
         <span className="car-category">{vehicle.category}</span>
         <h3 className="car-title">{vehicle.make} <span>{vehicle.model}</span></h3>
         <div className="car-price">{priceFmt}</div>
-        {outOfStock ? (
+        {isAdmin ? (
+          <p className="muted small">Manage this vehicle from the Admin Dashboard.</p>
+        ) : outOfStock ? (
           <p className="muted small">Currently unavailable</p>
         ) : (
           <div className="cart-controls">
