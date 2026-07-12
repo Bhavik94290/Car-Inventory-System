@@ -30,6 +30,16 @@ body {
     linear-gradient(transparent 97%, rgba(23,28,38,0.035) 97%) 0 0 / 100% 42px,
     var(--paper);
 }
+/* The admin dashboard's dark theme is scoped to .admin-shell, which only
+   bleeds edge-to-edge within the .page wrapper's own padding — it can't
+   reach past .page's max-width/centering to color the real page background.
+   AdminDashboard toggles this class on <body> itself so nothing light shows
+   around it. */
+body.admin-mode {
+  background:
+    linear-gradient(transparent 97%, rgba(255,255,255,0.03) 97%) 0 0 / 100% 42px,
+    #0c1118;
+}
 
 /* ---------- navbar ---------- */
 .navbar {

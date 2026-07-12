@@ -24,6 +24,14 @@ export default function AdminDashboard() {
 
   useEffect(() => { load() }, [])
 
+  // .admin-shell's dark background can't reach past the .page wrapper's
+  // max-width/centering, so toggle it on <body> itself for a true full-bleed
+  // dark page — removed again on unmount so other pages stay light.
+  useEffect(() => {
+    document.body.classList.add('admin-mode')
+    return () => document.body.classList.remove('admin-mode')
+  }, [])
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   const notify = (msg) => { setMessage(msg); setError('') }
