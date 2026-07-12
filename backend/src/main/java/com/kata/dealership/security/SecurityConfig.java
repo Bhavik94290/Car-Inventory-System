@@ -41,8 +41,9 @@ public class SecurityConfig {
                 // public
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/vehicles", "/api/vehicles/search", "/api/vehicles/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 // admin only
-                .requestMatchers(HttpMethod.POST, "/api/vehicles").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/vehicles", "/api/vehicles/upload-image").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/vehicles/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/vehicles/*/restock").hasRole("ADMIN")

@@ -34,6 +34,9 @@ public class Vehicle {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(length = 1000)
+    private String imageUrl;
+
     @Column(nullable = false)
     private Instant createdAt;
 }

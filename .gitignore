@@ -14,3 +14,6 @@ frontend/dist/
 
 # Env / secrets — never commit real credentials
 .env
+
+# Uploaded vehicle images (local dev storage)
+backend/uploads/

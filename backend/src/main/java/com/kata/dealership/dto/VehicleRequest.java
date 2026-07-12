@@ -11,4 +11,5 @@ public class VehicleRequest {
     @NotBlank private String category;
     @NotNull @DecimalMin(value = "0.0", inclusive = false) private BigDecimal price;
     @NotNull @Min(0) private Integer quantity;
+    private String imageUrl; // optional
 }

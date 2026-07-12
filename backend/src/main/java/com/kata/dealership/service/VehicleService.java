@@ -30,6 +30,7 @@ public class VehicleService {
                 .category(request.getCategory())
                 .price(request.getPrice())
                 .quantity(request.getQuantity())
+                .imageUrl(request.getImageUrl())
                 .createdAt(Instant.now())
                 .build();
         return vehicleRepository.save(vehicle);
@@ -58,6 +59,7 @@ public class VehicleService {
         vehicle.setCategory(request.getCategory());
         vehicle.setPrice(request.getPrice());
         vehicle.setQuantity(request.getQuantity());
+        vehicle.setImageUrl(request.getImageUrl());
         return vehicleRepository.save(vehicle);
     }
 

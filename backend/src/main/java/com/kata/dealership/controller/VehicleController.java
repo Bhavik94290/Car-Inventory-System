@@ -3,6 +3,7 @@ package com.kata.dealership.controller;
 import com.kata.dealership.dto.RestockRequest;
 import com.kata.dealership.dto.VehicleRequest;
 import com.kata.dealership.entity.Vehicle;
+import com.kata.dealership.service.FileStorageService;
 import com.kata.dealership.service.VehicleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +14,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -27,6 +31,7 @@ public class VehicleController {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final VehicleService vehicleService;
+    private final FileStorageService fileStorageService;
 
     // ---- public ----
     @GetMapping
@@ -77,6 +82,16 @@ public class VehicleController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         vehicleService.deleteVehicle(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/upload-image")
+    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+        String filename = fileStorageService.store(file);
+        String url = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/uploads/vehicles/")
+                .path(filename)
+                .toUriString();
+        return ResponseEntity.ok(Map.of("imageUrl", url));
     }
 
     @PostMapping("/{id}/restock")
