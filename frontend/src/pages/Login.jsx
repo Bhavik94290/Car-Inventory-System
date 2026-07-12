@@ -29,6 +29,7 @@ export default function Login() {
 
   return (
     <div className="auth-card">
+      <div className="auth-icon" aria-hidden="true">🔑</div>
       <h1>Welcome back</h1>
       <p className="muted">Log in to browse and purchase vehicles.</p>
       {error && <div className="alert">{error}</div>}
