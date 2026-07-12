@@ -1,0 +1,416 @@
+{
+  "info": {
+    "name": "AI Kata Car Dealership Inventory System",
+    "description": "API collection for the Car Dealership Inventory System (Spring Boot backend). Public /register always creates a USER; log in as an existing admin and use 'Create Admin (admin-only)' to make more admins. Register/login as USER for purchase, checkout and chat order lookup.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "vehicleId", "value": "vehicle_example", "type": "string" },
+    { "key": "imageUrl", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "razorpayOrderId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (USER)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane.doe@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Admin (admin-only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register-admin", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register-admin"] }
+          },
+          "description": "Public registration always creates a USER now — there is no self-service way to become ADMIN. This endpoint creates a new admin account, but only an already-authenticated ADMIN may call it (requires {{adminToken}} — see comment below). Returns {name, email, role}, no token (it's not a login for the new account).",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// {{adminToken}} must already be set from a prior Login as an existing admin.",
+                  "// There's no bootstrap endpoint for the very first admin — that account is",
+                  "// created directly in the database (see VehicleDataSeeder / README)."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.doe@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    if (json.role === 'ADMIN') { pm.collectionVariables.set('adminToken', json.token); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.doe@example.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "forgot-password"] }
+          },
+          "description": "Always returns the same generic message whether or not the email is registered (no enumeration). If the email exists, a 6-digit OTP is sent to it via Gmail SMTP (requires MAIL_USERNAME/MAIL_PASSWORD configured in backend/.env) — check that inbox and paste the code into the Reset Password request below."
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.doe@example.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "reset-password"] }
+          },
+          "description": "Run 'Forgot Password' first, then replace the otp value above with the 6-digit code emailed to that address. The code is single-use and expires after 10 minutes; reusing it or a stale/wrong code returns 400."
+        }
+      ]
+    },
+    {
+      "name": "Vehicles - Public",
+      "item": [
+        {
+          "name": "Get All Vehicles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/vehicles", "host": ["{{baseUrl}}"], "path": ["api", "vehicles"] }
+          }
+        },
+        {
+          "name": "Search Vehicles (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/search?make=Toyota&model=Fortuner&category=SUV&minPrice=50000&maxPrice=300000&inStockOnly=false&page=0&size=12&sortBy=price&sortDir=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "search"],
+              "query": [
+                { "key": "make", "value": "Toyota" },
+                { "key": "model", "value": "Fortuner" },
+                { "key": "category", "value": "SUV" },
+                { "key": "minPrice", "value": "50000" },
+                { "key": "maxPrice", "value": "300000" },
+                { "key": "inStockOnly", "value": "false", "description": "true = only vehicles with quantity > 0" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "12", "description": "max 100" },
+                { "key": "sortBy", "value": "price", "description": "one of: createdAt, make, model, category, price, quantity" },
+                { "key": "sortDir", "value": "asc", "description": "asc | desc" }
+              ]
+            },
+            "description": "Response is a Spring Page: { content: [...], totalElements, totalPages, number, size, ... }"
+          }
+        },
+        {
+          "name": "Get Vehicle By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "{{vehicleId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vehicles - Admin",
+      "item": [
+        {
+          "name": "Upload Vehicle Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/vehicles/upload-image", "host": ["{{baseUrl}}"], "path": ["api", "vehicles", "upload-image"] }
+          },
+          "description": "Select an image file (jpg/jpeg/png/gif/webp, max 5MB) in the Body > form-data tab before sending. Returns {imageUrl}, served from /uploads/vehicles/**, and captured below for use in Add/Update Vehicle.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('imageUrl', json.imageUrl);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"make\": \"Toyota\",\n  \"model\": \"Fortuner\",\n  \"category\": \"SUV\",\n  \"price\": 245000,\n  \"quantity\": 4,\n  \"imageUrl\": \"{{imageUrl}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/vehicles", "host": ["{{baseUrl}}"], "path": ["api", "vehicles"] }
+          },
+          "description": "Price is kept well under Razorpay's default per-transaction limit on new/unactivated accounts (commonly Rs. 5,00,000) so checkout can actually complete. imageUrl is optional — leave {{imageUrl}} unset (empty) if you skipped the upload request.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('vehicleId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Vehicle",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"make\": \"Toyota\",\n  \"model\": \"Fortuner\",\n  \"category\": \"SUV\",\n  \"price\": 260000,\n  \"quantity\": 5,\n  \"imageUrl\": \"{{imageUrl}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "{{vehicleId}}"]
+            }
+          }
+        },
+        {
+          "name": "Restock Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}/restock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "{{vehicleId}}", "restock"]
+            }
+          }
+        },
+        {
+          "name": "Delete Vehicle",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "{{vehicleId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vehicles - User",
+      "item": [
+        {
+          "name": "Purchase Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}/purchase",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "vehicles", "{{vehicleId}}", "purchase"]
+            }
+          },
+          "description": "Direct one-click purchase (decrements quantity by 1). For a cart with multiple vehicles/quantities, use Orders & Payments > Checkout instead."
+        }
+      ]
+    },
+    {
+      "name": "Orders & Payments (Razorpay)",
+      "item": [
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"vehicleId\": \"{{vehicleId}}\", \"quantity\": 1 }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/checkout", "host": ["{{baseUrl}}"], "path": ["api", "orders", "checkout"] }
+          },
+          "description": "Validates stock, computes the total from current vehicle prices, and creates a Razorpay order. Returns {orderId, razorpayOrderId, amount, currency, keyId} — captured below for Verify Payment.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('orderId', json.orderId);",
+                  "    pm.collectionVariables.set('razorpayOrderId', json.razorpayOrderId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"razorpayOrderId\": \"{{razorpayOrderId}}\",\n  \"razorpayPaymentId\": \"pay_replace_with_real_id\",\n  \"razorpaySignature\": \"replace_with_real_signature\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/verify", "host": ["{{baseUrl}}"], "path": ["api", "orders", "verify"] }
+          },
+          "description": "razorpayPaymentId and razorpaySignature can only come from a real payment completed through the Razorpay Checkout widget in a browser — the signature is an HMAC Razorpay computes over the actual payment, not something you can fabricate here. This request will return 402 with the placeholder values above; it's included for API completeness, not standalone testing. Use the real frontend checkout flow to exercise this end to end."
+        },
+        {
+          "name": "My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/orders/mine", "host": ["{{baseUrl}}"], "path": ["api", "orders", "mine"] }
+          },
+          "description": "The caller's past orders, newest first."
+        }
+      ]
+    },
+    {
+      "name": "Chat Assistant",
+      "item": [
+        {
+          "name": "Chat (anonymous)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Do you have any SUVs under 2,00,000?\",\n  \"history\": []\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+          },
+          "description": "Public — works without a token. Returns {reply, vehicles: [...]}, where vehicles are any inventory matches the assistant looked up via its search tool."
+        },
+        {
+          "name": "Chat (logged in, can look up my orders)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What's the status of my last order?\",\n  \"history\": []\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/chat", "host": ["{{baseUrl}}"], "path": ["api", "chat"] }
+          },
+          "description": "With a valid token, the assistant can also use its order-lookup tool to check the caller's own orders."
+        }
+      ]
+    }
+  ]
+}

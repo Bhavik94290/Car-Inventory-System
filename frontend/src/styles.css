@@ -1,0 +1,482 @@
+/* ============ AI Kata Car Dealership — dark "spec sheet" theme ============ */
+:root {
+  --ink: #e7ebf1;          /* primary text (light-on-dark) */
+  --paper: #0c1118;        /* page background */
+  --panel: #161d29;        /* card/surface background */
+  --steel: #8b93a3;        /* muted labels */
+  --line: #262f3f;
+  --petrol: #22b8b2;       /* primary — petrol green-blue, brightened for dark bg */
+  --petrol-dark: #1a8f8a;
+  --signal: #e0a100;       /* amber signal — used sparingly */
+  --danger: #f87171;
+  --ok-bg: #123425;
+  --ok-ink: #4ade80;
+  --err-bg: #3a1a17;
+  /* Fixed dark surface for UI chrome that's always dark regardless of theme
+     (navbar, hero banner, chat header) — decoupled from --ink now that --ink
+     is the (theme-dependent) text color, not a surface fill. */
+  --chrome-dark: #171c26;
+  /* Elevated surface — Material dark-theme cards mix a touch of white into
+     the base surface rather than relying on a border, so raised elements
+     read as "closer to the light" instead of just "outlined". */
+  --panel-raised: #1c2531;
+  --radius: 12px;
+  --radius-lg: 18px;
+  /* Material-style two-layer elevation: a tight "key" shadow plus a soft,
+     wider "ambient" shadow gives cards real depth instead of a flat blur. */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 1px 4px rgba(0,0,0,0.26);
+  --shadow-md: 0 3px 6px rgba(0,0,0,0.3), 0 10px 24px rgba(0,0,0,0.32);
+  --shadow-lg: 0 6px 14px rgba(0,0,0,0.34), 0 20px 44px rgba(0,0,0,0.42);
+  --display: 'Archivo', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--body);
+  color: var(--ink);
+  background:
+    linear-gradient(transparent 97%, rgba(255,255,255,0.03) 97%) 0 0 / 100% 42px,
+    var(--paper);
+}
+
+/* ---------- navbar ---------- */
+.navbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 32px;
+  background: var(--chrome-dark);
+  color: #fff;
+}
+.brand { text-decoration: none; color: #fff; display: flex; align-items: center; gap: 10px; line-height: 1.1; }
+.brand-mark { font-family: var(--display); font-weight: 800; letter-spacing: 0.02em; font-size: 1.15rem; }
+.nav-links { display: flex; align-items: center; gap: 20px; }
+.nav-links a { color: #e8eaef; text-decoration: none; font-size: 0.92rem; }
+.nav-links a:hover { color: var(--signal); }
+.nav-user { font-size: 0.85rem; color: #aeb4bf; }
+.nav-user em { color: var(--signal); font-style: normal; }
+
+a { color: var(--petrol); font-weight: 600; text-decoration: none; }
+a:hover { color: var(--signal); text-decoration: underline; }
+
+/* ---------- layout ---------- */
+.page { max-width: 1400px; margin: 0 auto; padding: 32px 24px 80px; }
+.muted { color: var(--steel); }
+.small { font-size: 0.85rem; }
+
+/* ---------- hero ---------- */
+.hero {
+  position: relative; overflow: hidden;
+  margin-bottom: 28px; padding: 36px 32px;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 88% 30%, rgba(224,161,0,0.16), transparent 55%),
+    linear-gradient(120deg, var(--chrome-dark) 0%, var(--petrol-dark) 100%);
+  color: #fff;
+  border-left: 4px solid var(--signal);
+}
+.hero::after {
+  content: '🚗 🚙 🚐 🏎️ 🚚';
+  position: absolute; right: -10px; bottom: -22px;
+  font-size: 2.6rem; letter-spacing: 10px; opacity: 0.14;
+  pointer-events: none;
+}
+.hero h1 { font-family: var(--display); font-weight: 800; font-size: 2.2rem; margin: 0 0 8px; position: relative; }
+.hero p { position: relative; color: #d7dbe2; max-width: 60ch; }
+.hero .muted { color: #c3c9d3; }
+
+/* ---------- buttons ---------- */
+.btn {
+  font-family: var(--body); font-weight: 600; font-size: 0.9rem;
+  border-radius: var(--radius); padding: 10px 18px; cursor: pointer;
+  border: 1.5px solid transparent; transition: background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
+  /* Plain <button> elements don't inherit page text color like other tags —
+     without this, the browser's own default (dark) button text color shows
+     through, which is why "Edit"/"Restock" (no color override) read as
+     barely visible while "Delete" (explicit --danger color) stood out fine. */
+  color: var(--ink);
+}
+.btn-solid { background: var(--petrol); color: #fff; box-shadow: 0 2px 8px rgba(15,94,99,0.28); }
+.btn-solid:hover:not(:disabled) { background: var(--petrol-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,94,99,0.35); }
+.btn-solid:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+.btn-outline { background: transparent; color: inherit; border-color: currentColor; }
+.btn-cta { background: transparent; color: var(--petrol); border-color: var(--petrol); font-weight: 700; }
+.btn-cta:hover:not(:disabled) { background: var(--petrol); color: #fff; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-mini { padding: 5px 10px; font-size: 0.8rem; background: var(--panel); border: 1px solid var(--line); }
+.btn-mini:hover { border-color: var(--petrol); color: var(--petrol); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { border-color: var(--danger); }
+
+/* ---------- forms ---------- */
+input, select {
+  font-family: var(--body); font-size: 0.95rem;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); color: var(--ink); width: 100%;
+}
+input:focus, select:focus, .btn:focus-visible {
+  outline: 2px solid var(--petrol); outline-offset: 1px;
+}
+/* Chrome/Edge/Safari force a light background + dark text on autofilled
+   inputs (e.g. a Category you've typed before, saved emails/passwords),
+   completely ignoring the page's own dark theme, and it can't be overridden
+   with a plain background rule — only this specific autofill pseudo-class
+   + an inset box-shadow "paint over" hack actually works. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--panel) inset;
+  box-shadow: 0 0 0 1000px var(--panel) inset;
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-in-out 0s;
+}
+label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px; color: var(--steel); }
+label input, label select { margin-top: 5px; }
+
+.password-checklist {
+  list-style: none; margin: -6px 0 14px; padding: 10px 12px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  display: grid; gap: 4px; font-size: 0.8rem; color: var(--steel);
+}
+.password-checklist li span { display: inline-block; width: 14px; }
+.password-checklist li.met { color: var(--ok-ink); }
+.password-checklist li.met span { color: var(--ok-ink); }
+
+.auth-card {
+  max-width: 420px; margin: 48px auto; background: var(--panel-raised);
+  border-radius: var(--radius-lg); padding: 32px;
+  box-shadow: var(--shadow-md);
+}
+.auth-icon {
+  width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; margin-bottom: 14px;
+  background: linear-gradient(135deg, var(--petrol), var(--petrol-dark)); box-shadow: 0 6px 16px rgba(15,94,99,0.3);
+}
+.auth-card h1 { font-family: var(--display); margin: 0 0 4px; }
+.auth-card form { margin-top: 20px; }
+
+/* ---------- alerts ---------- */
+.alert {
+  background: var(--err-bg); color: var(--danger);
+  border-radius: var(--radius); padding: 12px 16px; margin: 14px 0; font-size: 0.9rem;
+}
+.alert-ok { background: var(--ok-bg); color: var(--ok-ink); }
+
+/* ---------- search ---------- */
+.search-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+}
+.search-bar input, .search-bar select { flex: 1 1 150px; min-width: 130px; width: auto; }
+.checkbox-inline {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 0;
+  font-size: 0.85rem; font-weight: 500; color: var(--ink); white-space: nowrap;
+}
+.checkbox-inline input { width: auto; }
+.results-count { margin: 0 0 16px; }
+.load-more { display: flex; justify-content: center; margin-top: 26px; }
+
+/* ---------- car grid ---------- */
+/* Fixed column counts (rather than auto-fill) so the grid always reads as
+   tidy full rows — 4 across on desktop, 2 on tablet, 1 on phones — instead
+   of whatever count happens to fit the container width. */
+.car-grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
+@media (min-width: 620px) { .car-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .car-grid { grid-template-columns: repeat(4, 1fr); } }
+.car-card {
+  background: var(--panel-raised); border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+}
+.car-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(34,184,178,0.35);
+}
+.car-card.sold-out { opacity: 0.72; }
+.car-card.sold-out:hover { transform: none; box-shadow: var(--shadow-sm); }
+
+.car-media {
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+  /* Real vehicle photos are almost always shot on a plain white/light
+     backdrop — a light neutral tray (rather than the dark card fill) lets
+     them sit naturally instead of showing a dark halo around the car. */
+  background: #e9edf1;
+}
+.car-media img, .car-illustration { width: 100%; height: 100%; }
+.car-media img { object-fit: cover; display: block; transition: transform 0.35s ease; }
+.car-card:hover .car-media img { transform: scale(1.06); }
+
+.car-illustration {
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.car-illustration-svg { width: 78%; max-width: 220px; transition: transform 0.35s ease; }
+.car-card:hover .car-illustration-svg { transform: translateY(-2px) scale(1.04); }
+.car-illustration-badge {
+  position: absolute; top: 10px; left: 10px; font-size: 1.1rem;
+  background: rgba(255,255,255,0.18); backdrop-filter: blur(2px);
+  border-radius: 999px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+}
+
+.stock-pill { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.stock-pill-media { position: absolute; bottom: 10px; right: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+.stock-in { background: var(--ok-bg); color: var(--ok-ink); }
+.stock-out { background: var(--err-bg); color: var(--danger); }
+
+/* The image + category/title/price are wrapped in a Link through to the
+   detail page; neutralize the global link color/underline so the card's own
+   text colors (make in --ink, model in --petrol) still apply untouched. */
+.car-card-link { display: block; color: inherit; text-decoration: none; }
+.car-card-link:hover { color: inherit; text-decoration: none; }
+.car-card-link-text { padding: 16px 18px 0; display: flex; flex-direction: column; gap: 8px; }
+.car-card-body { padding: 8px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+.car-category {
+  display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  font-weight: 700; padding: 4px 10px; border-radius: 999px;
+}
+.car-title { font-family: var(--display); font-weight: 700; font-size: 1.25rem; margin: 0; }
+.car-title span { color: var(--petrol); }
+.car-price { font-family: var(--display); font-weight: 800; font-size: 1.35rem; margin-bottom: 4px; }
+
+/* ---------- vehicle detail page ---------- */
+.back-link { display: inline-block; margin-bottom: 18px; }
+.vehicle-detail {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  background: var(--panel-raised); border-radius: var(--radius-lg);
+  padding: 28px; box-shadow: var(--shadow-md);
+}
+.vehicle-detail-media {
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden;
+  border-radius: var(--radius); background: #e9edf1;
+}
+.vehicle-detail-media img, .vehicle-detail-media .car-illustration { width: 100%; height: 100%; }
+.vehicle-detail-media img { object-fit: cover; display: block; }
+.vehicle-detail-info { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.vehicle-detail-info .car-title { font-size: 1.8rem; }
+.vehicle-detail-info .car-price { font-size: 1.6rem; }
+.vehicle-detail-info .cart-controls { width: 100%; max-width: 320px; margin-top: 6px; }
+.vehicle-detail-specs {
+  list-style: none; margin: 4px 0 0; padding: 0; width: 100%;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.vehicle-detail-specs li {
+  background: var(--paper); border-radius: var(--radius); padding: 10px 14px;
+}
+.vehicle-detail-specs span {
+  display: block; font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel);
+}
+.vehicle-detail-specs strong { font-family: var(--display); font-size: 1.05rem; }
+@media (max-width: 780px) {
+  .vehicle-detail { grid-template-columns: 1fr; }
+}
+
+/* ---------- hero stats ---------- */
+.hero-stats { position: relative; display: flex; gap: 28px; margin-top: 18px; flex-wrap: wrap; }
+.hero-stat { display: flex; flex-direction: column; }
+.hero-stat strong { font-family: var(--display); font-size: 1.5rem; font-weight: 800; color: #fff; }
+.hero-stat span { font-size: 0.75rem; letter-spacing: 0.06em; color: #c3c9d3; }
+
+/* ---------- category quick-filter chips ---------- */
+.category-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chip {
+  font-family: var(--body); font-weight: 600; font-size: 0.82rem;
+  padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--line);
+  background: var(--panel); color: var(--steel); cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.chip-active { color: #fff !important; box-shadow: var(--shadow-sm); }
+
+/* ---------- admin: dark back-office theme ---------- */
+.admin-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--line);
+}
+.admin-eyebrow {
+  display: block; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--petrol); font-weight: 700; margin-bottom: 4px;
+}
+.admin-header h1 { font-family: var(--display); font-weight: 800; margin: 0 0 4px; color: var(--ink); }
+
+.stat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--panel-raised); border-radius: var(--radius-lg);
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.stat-icon {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  background: rgba(34,184,178,0.16);
+}
+.stat-card-warn .stat-icon { background: rgba(248,113,113,0.16); }
+.stat-label { font-size: 0.75rem; color: var(--steel); font-weight: 600; letter-spacing: 0.04em; }
+.stat-value { font-family: var(--display); font-weight: 800; font-size: 1.7rem; color: var(--ink); }
+.stat-value-sm { font-size: 1.15rem; }
+.stat-card-warn .stat-value { color: var(--danger); }
+
+/* ---------- admin ---------- */
+.admin-form {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 28px;
+}
+.admin-form h2 { font-family: var(--display); margin: 0 0 14px; font-size: 1.2rem; }
+.admin-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.admin-form-image-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.upload-btn { cursor: pointer; white-space: nowrap; }
+.admin-image-preview { display: flex; align-items: center; gap: 10px; }
+.admin-image-preview img { width: 64px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+.admin-form-actions { display: flex; gap: 10px; }
+
+.inventory-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.inventory-table th, .inventory-table td { vertical-align: middle; }
+.inventory-table th {
+  text-align: left; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--steel); padding: 12px 14px; border-bottom: 2px solid var(--line); background: var(--paper);
+}
+.inventory-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+.inventory-table .row-out td { color: var(--danger); }
+/* Price and Qty are numeric — right-align so digits stack for easy scanning
+   (left-aligned numbers of different lengths, e.g. "9" vs "40", read poorly). */
+.inventory-table th:nth-child(6), .inventory-table td:nth-child(6),
+.inventory-table th:nth-child(7), .inventory-table td:nth-child(7) {
+  text-align: right;
+}
+/* .btn-mini's own left padding (10px) pushes "Edit" text inward past where
+   the ACTIONS header sits flush at the cell's own padding — pull the whole
+   button group left by that same amount so the first button's text lines up
+   with the column header, like every other column. */
+.row-actions { display: flex; align-items: center; gap: 6px; margin-left: -10px; }
+
+.table-thumb { width: 64px; padding: 8px 14px !important; }
+.table-thumb img, .table-thumb-illustration {
+  width: 56px; height: 40px; border-radius: 6px; object-fit: cover; display: block;
+}
+.table-thumb-illustration .car-illustration-svg { width: 90%; }
+.table-thumb-illustration .car-illustration-badge { width: 16px; height: 16px; font-size: 0.6rem; top: 3px; left: 3px; }
+
+/* ---------- cart controls (vehicle card) ---------- */
+.cart-controls { display: flex; flex-direction: column; gap: 8px; }
+.qty-stepper {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 6px 10px; font-weight: 700;
+}
+.qty-stepper button {
+  width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--panel); cursor: pointer; font-size: 1rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.qty-stepper button:disabled { opacity: 0.4; cursor: not-allowed; }
+.qty-stepper button:hover:not(:disabled) { border-color: var(--petrol); color: var(--petrol); }
+
+/* ---------- navbar cart link ---------- */
+.cart-link { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.cart-badge {
+  position: absolute; top: -9px; right: -14px; background: var(--signal); color: var(--ink);
+  font-size: 0.68rem; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+/* ---------- cart / checkout page ---------- */
+.cart-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.cart-row {
+  display: flex; align-items: center; gap: 18px;
+  background: var(--panel-raised); border-radius: var(--radius-lg); padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+.cart-row:hover { box-shadow: var(--shadow-md); }
+.cart-row-info { flex: 1; min-width: 0; }
+.cart-row-info .car-title { font-size: 1.05rem; }
+.cart-row-subtotal { font-family: var(--display); font-weight: 700; min-width: 110px; text-align: right; }
+.cart-summary {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 20px; font-size: 1.05rem;
+}
+.cart-total { font-family: var(--display); font-weight: 800; font-size: 1.4rem; color: var(--petrol); }
+
+/* ---------- order history ---------- */
+.orders-list { display: flex; flex-direction: column; gap: 14px; }
+.order-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px;
+}
+.order-card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--display); font-weight: 700; margin-bottom: 4px;
+}
+.order-items { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; font-size: 0.9rem; }
+.order-card-total { margin-top: 10px; font-weight: 700; text-align: right; }
+
+/* ---------- chat widget ---------- */
+.chat-widget { position: fixed; right: 22px; bottom: 22px; z-index: 200; }
+.chat-toggle {
+  width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--petrol), var(--petrol-dark)); color: #fff;
+  font-size: 1.5rem; box-shadow: 0 8px 20px rgba(15,94,99,0.35);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s ease;
+}
+.chat-toggle:hover { transform: scale(1.06); }
+
+.chat-panel {
+  position: absolute; right: 0; bottom: 72px; width: 340px; max-width: calc(100vw - 44px);
+  height: 460px; max-height: 70vh;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 18px 40px rgba(23,28,38,0.25);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-panel-header {
+  background: var(--chrome-dark); color: #fff; padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--display); font-weight: 700; font-size: 0.95rem;
+}
+.chat-close { background: none; border: none; color: #fff; cursor: pointer; font-size: 1rem; opacity: 0.8; }
+.chat-close:hover { opacity: 1; }
+
+.chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.chat-bubble { max-width: 88%; padding: 9px 12px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; }
+.chat-bubble p { margin: 0; white-space: pre-wrap; }
+.chat-bubble-user { align-self: flex-end; background: var(--petrol); color: #fff; border-bottom-right-radius: 3px; }
+.chat-bubble-assistant { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+.chat-typing { font-style: italic; color: var(--steel); }
+
+.chat-vehicle-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.chat-vehicle-card {
+  display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px;
+}
+.chat-vehicle-card:hover { border-color: var(--petrol); }
+.chat-vehicle-thumb { width: 52px; height: 38px; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+.chat-vehicle-card strong { display: block; font-size: 0.85rem; }
+.chat-vehicle-card .muted { display: block; }
+
+.chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
+.chat-input-row input { flex: 1; }
+
+@media (max-width: 480px) {
+  .chat-panel { width: calc(100vw - 24px); right: -10px; }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 820px) {
+  .navbar { flex-direction: column; gap: 10px; }
+  .inventory-table { display: block; overflow-x: auto; }
+  .hero::after { display: none; }
+  .cart-row { flex-wrap: wrap; }
+  .cart-row-subtotal { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; scroll-behavior: auto !important; }
+}

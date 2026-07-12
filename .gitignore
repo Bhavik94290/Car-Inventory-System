@@ -1,0 +1,19 @@
+# Java / Maven
+backend/target/
+*.class
+*.log
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Env / secrets — never commit real credentials
+.env
+
+# Uploaded vehicle images (local dev storage)
+backend/uploads/
