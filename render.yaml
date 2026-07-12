@@ -1,11 +1,10 @@
 services:
   - type: web
     name: car-dealership-api
-    env: java
+    runtime: docker
     rootDir: backend
+    dockerfilePath: ./Dockerfile
     plan: free
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/*.jar
     envVars:
       - key: DB_URL
         sync: false
