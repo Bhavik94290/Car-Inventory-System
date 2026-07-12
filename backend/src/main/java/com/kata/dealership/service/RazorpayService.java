@@ -1,11 +1,14 @@
 package com.kata.dealership.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kata.dealership.exception.PaymentGatewayException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,6 +30,7 @@ public class RazorpayService {
     private static final String ORDERS_URL = "https://api.razorpay.com/v1/orders";
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${razorpay.key-id}")
     private String keyId;
@@ -56,9 +60,39 @@ public class RazorpayService {
                 throw new PaymentGatewayException("Razorpay returned an empty order response");
             }
             return order;
+        } catch (HttpStatusCodeException ex) {
+            throw new PaymentGatewayException(describeRazorpayError(ex));
         } catch (RestClientException ex) {
-            throw new PaymentGatewayException("Could not create Razorpay order: " + ex.getMessage());
+            throw new PaymentGatewayException("Could not reach Razorpay: " + ex.getMessage());
         }
+    }
+
+    /**
+     * Razorpay's error responses are JSON like {"error": {"description": "..."}}.
+     * Surface just that description instead of the raw HTTP/JSON dump, and add a
+     * hint for the "amount exceeds maximum amount allowed" case: that's a limit
+     * on the Razorpay account itself (common on new/unactivated test accounts),
+     * not something this app can raise — it needs to be fixed in the Razorpay
+     * dashboard or by contacting Razorpay support.
+     */
+    private String describeRazorpayError(HttpStatusCodeException ex) {
+        String description = null;
+        try {
+            JsonNode root = objectMapper.readTree(ex.getResponseBodyAsString());
+            description = root.path("error").path("description").asText(null);
+        } catch (Exception parseFailure) {
+            // Response wasn't the JSON shape we expected; fall back below.
+        }
+
+        if (description == null || description.isBlank()) {
+            return "Could not create Razorpay order: " + ex.getMessage();
+        }
+        if (description.toLowerCase().contains("amount exceeds")) {
+            return description + " This is a limit set on your Razorpay account (common on new "
+                    + "or unactivated test accounts) — try a smaller order, or ask Razorpay "
+                    + "support to raise your account's payment limit.";
+        }
+        return "Razorpay rejected this payment: " + description;
     }
 
     public boolean verifySignature(String razorpayOrderId, String razorpayPaymentId, String razorpaySignature) {
