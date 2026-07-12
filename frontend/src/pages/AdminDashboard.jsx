@@ -151,7 +151,6 @@ export default function AdminDashboard() {
           <input name="category" placeholder="Category" value={form.category} onChange={handleChange} required />
           <input name="price" type="number" min="1" placeholder="Price" value={form.price} onChange={handleChange} required />
           <input name="quantity" type="number" min="0" placeholder="Quantity" value={form.quantity} onChange={handleChange} required />
-          <input name="imageUrl" placeholder="Image URL (optional)" value={form.imageUrl} onChange={handleChange} />
         </div>
         <div className="admin-form-image-row">
           <label className="btn btn-outline btn-mini upload-btn">
