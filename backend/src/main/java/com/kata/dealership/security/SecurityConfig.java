@@ -38,6 +38,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                // admin only — must precede the general /api/auth/** permitAll below
+                .requestMatchers(HttpMethod.POST, "/api/auth/register-admin").hasRole("ADMIN")
                 // public
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/vehicles", "/api/vehicles/search", "/api/vehicles/*").permitAll()

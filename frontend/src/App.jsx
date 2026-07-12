@@ -45,17 +45,21 @@ export default function App() {
           <Route
             path="/cart"
             element={
-              <RequireNotAdmin>
-                <CartPage />
-              </RequireNotAdmin>
+              <RequireAuth>
+                <RequireNotAdmin>
+                  <CartPage />
+                </RequireNotAdmin>
+              </RequireAuth>
             }
           />
           <Route
             path="/checkout"
             element={
-              <RequireNotAdmin>
-                <CheckoutPage />
-              </RequireNotAdmin>
+              <RequireAuth>
+                <RequireNotAdmin>
+                  <CheckoutPage />
+                </RequireNotAdmin>
+              </RequireAuth>
             }
           />
           <Route

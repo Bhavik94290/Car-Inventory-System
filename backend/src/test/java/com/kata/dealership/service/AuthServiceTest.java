@@ -1,5 +1,6 @@
 package com.kata.dealership.service;
 
+import com.kata.dealership.dto.AdminCreatedResponse;
 import com.kata.dealership.dto.AuthResponse;
 import com.kata.dealership.dto.ForgotPasswordRequest;
 import com.kata.dealership.dto.ForgotPasswordResponse;
@@ -67,18 +68,20 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("register with role=ADMIN creates an admin account")
-    void register_asAdmin() {
+    @DisplayName("registerAdmin creates an ADMIN account, bypassing the public register path")
+    void registerAdmin_createsAdminAccount() {
         RegisterRequest request = RegisterRequest.builder()
-                .name("Boss").email("boss@example.com").password("secret123").role("ADMIN").build();
+                .name("Boss").email("boss@example.com").password("secret123").build();
 
         when(userRepository.existsByEmail("boss@example.com")).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hash");
-        when(jwtService.generateToken(any(UserDetails.class), anyMap())).thenReturn("jwt");
 
-        AuthResponse response = authService.register(request);
+        AdminCreatedResponse response = authService.registerAdmin(request);
 
         assertThat(response.getRole()).isEqualTo("ADMIN");
+        assertThat(response.getEmail()).isEqualTo("boss@example.com");
+        verify(userRepository).save(argThat(u -> u.getRole() == Role.ADMIN));
+        verifyNoInteractions(jwtService);
     }
 
     @Test

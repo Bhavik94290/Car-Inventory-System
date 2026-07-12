@@ -12,7 +12,7 @@ const PASSWORD_RULES = [
 ]
 
 export default function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'USER' })
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -71,13 +71,6 @@ export default function Register() {
             </li>
           ))}
         </ul>
-        <label>
-          Role
-          <select name="role" value={form.role} onChange={handleChange}>
-            <option value="USER">User</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-        </label>
         <button className="btn btn-solid btn-block" disabled={loading || !passwordValid}>
           {loading ? 'Creating…' : 'Register'}
         </button>

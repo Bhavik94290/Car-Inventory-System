@@ -1,5 +1,6 @@
 package com.kata.dealership.service;
 
+import com.kata.dealership.dto.AdminCreatedResponse;
 import com.kata.dealership.dto.AuthResponse;
 import com.kata.dealership.dto.ForgotPasswordRequest;
 import com.kata.dealership.dto.ForgotPasswordResponse;
@@ -41,11 +42,29 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponse register(RegisterRequest request) {
+        return register(request, Role.USER);
+    }
+
+    // Only reachable via the admin-only /auth/register-admin endpoint
+    // (see SecurityConfig) — public registration can never create an admin.
+    public AdminCreatedResponse registerAdmin(RegisterRequest request) {
+        User user = createUser(request, Role.ADMIN);
+        return AdminCreatedResponse.builder()
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
+    }
+
+    private AuthResponse register(RegisterRequest request, Role role) {
+        User user = createUser(request, role);
+        return buildResponse(user);
+    }
+
+    private User createUser(RegisterRequest request, Role role) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateEmailException("Email already registered: " + request.getEmail());
         }
-
-        Role role = "ADMIN".equalsIgnoreCase(request.getRole()) ? Role.ADMIN : Role.USER;
 
         User user = User.builder()
                 .id(IdGenerator.generate("user"))
@@ -56,7 +75,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        return buildResponse(user);
+        return user;
     }
 
     public AuthResponse login(LoginRequest request) {

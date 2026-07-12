@@ -65,7 +65,7 @@ export default function VehicleCard({ vehicle }) {
                 +
               </button>
             </div>
-            <button className="btn btn-solid btn-block" onClick={handleAdd}>
+            <button className="btn btn-cta btn-block" onClick={handleAdd}>
               {added ? 'Added ✓' : 'Add to Cart'}
             </button>
           </div>

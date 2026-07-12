@@ -16,6 +16,4 @@ public class RegisterRequest {
             message = "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a digit, and a symbol"
     )
     private String password;
-
-    private String role; // optional: USER (default) or ADMIN
 }

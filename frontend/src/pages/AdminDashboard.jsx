@@ -3,6 +3,7 @@ import api from '../api/client.js'
 import CarIllustration from '../components/CarIllustration.jsx'
 
 const emptyForm = { make: '', model: '', category: '', price: '', quantity: '', imageUrl: '' }
+const emptyAdminForm = { name: '', email: '', password: '' }
 const shortId = (id) => (id && id.length > 16 ? `${id.slice(0, 14)}…` : id)
 
 export default function AdminDashboard() {
@@ -12,6 +13,9 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [showAdminForm, setShowAdminForm] = useState(false)
+  const [adminForm, setAdminForm] = useState(emptyAdminForm)
+  const [creatingAdmin, setCreatingAdmin] = useState(false)
 
   const load = async () => {
     try {
@@ -106,6 +110,23 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleAdminFormChange = (e) => setAdminForm({ ...adminForm, [e.target.name]: e.target.value })
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault()
+    setCreatingAdmin(true)
+    try {
+      const { data } = await api.post('/auth/register-admin', adminForm)
+      notify(`Admin account created for ${data.name} (${data.email}).`)
+      setAdminForm(emptyAdminForm)
+      setShowAdminForm(false)
+    } catch (err) {
+      fail(err, 'Could not create admin account.')
+    } finally {
+      setCreatingAdmin(false)
+    }
+  }
+
   const totalUnits = vehicles.reduce((sum, v) => sum + v.quantity, 0)
   const outOfStockCount = vehicles.filter((v) => v.quantity === 0).length
   const inventoryValue = vehicles.reduce((sum, v) => sum + Number(v.price) * v.quantity, 0)
@@ -119,22 +140,45 @@ export default function AdminDashboard() {
           <h1>Admin Panel</h1>
           <p className="muted">Add, update, delete and restock inventory.</p>
         </div>
+        <button className="btn btn-outline" type="button" onClick={() => setShowAdminForm((s) => !s)}>
+          {showAdminForm ? 'Cancel' : '+ Create admin'}
+        </button>
       </section>
+
+      {showAdminForm && (
+        <form className="admin-form" onSubmit={handleCreateAdmin}>
+          <h2>Create admin account</h2>
+          <div className="admin-form-grid">
+            <input name="name" placeholder="Name" value={adminForm.name} onChange={handleAdminFormChange} required />
+            <input name="email" type="email" placeholder="Email" value={adminForm.email} onChange={handleAdminFormChange} required />
+            <input name="password" type="password" minLength={8} placeholder="Password" value={adminForm.password} onChange={handleAdminFormChange} required />
+          </div>
+          <div className="admin-form-actions">
+            <button className="btn btn-solid" type="submit" disabled={creatingAdmin}>
+              {creatingAdmin ? 'Creating…' : 'Create admin'}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="stat-grid">
         <div className="stat-card">
+          <span className="stat-icon" aria-hidden="true">🚗</span>
           <span className="stat-label">Total vehicles</span>
           <span className="stat-value">{vehicles.length}</span>
         </div>
         <div className="stat-card">
+          <span className="stat-icon" aria-hidden="true">📦</span>
           <span className="stat-label">Units in stock</span>
           <span className="stat-value">{totalUnits}</span>
         </div>
         <div className="stat-card stat-card-warn">
+          <span className="stat-icon" aria-hidden="true">⚠️</span>
           <span className="stat-label">Out of stock</span>
           <span className="stat-value">{outOfStockCount}</span>
         </div>
         <div className="stat-card">
+          <span className="stat-icon" aria-hidden="true">💰</span>
           <span className="stat-label">Inventory value</span>
           <span className="stat-value stat-value-sm">{valueFmt}</span>
         </div>

@@ -29,10 +29,12 @@ export default function Navbar() {
         ) : (
           <>
             {user && <Link to="/orders">My Orders</Link>}
-            <Link to="/cart" className="cart-link">
-              🛒 Cart
-              {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-            </Link>
+            {user && (
+              <Link to="/cart" className="cart-link">
+                🛒 Cart
+                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+              </Link>
+            )}
           </>
         )}
         {user ? (
