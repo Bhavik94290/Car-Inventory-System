@@ -1,10 +1,10 @@
 /* ============ AI Kata Car Dealership — "spec sheet" theme ============ */
 :root {
   --ink: #171c26;          /* deep asphalt */
-  --paper: #f6f7f4;        /* showroom concrete */
+  --paper: #f7f7f3;        /* showroom concrete */
   --panel: #ffffff;
   --steel: #5b6472;        /* muted labels */
-  --line: #dfe2da;
+  --line: #e2e4dd;
   --petrol: #0f5e63;       /* primary — petrol green-blue */
   --petrol-dark: #0a464a;
   --signal: #e0a100;       /* amber signal — used sparingly */
@@ -12,7 +12,11 @@
   --ok-bg: #e7f2ec;
   --ok-ink: #175c3a;
   --err-bg: #f9e9e6;
-  --radius: 10px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 3px rgba(23,28,38,0.06);
+  --shadow-md: 0 10px 24px rgba(23,28,38,0.10);
+  --shadow-lg: 0 20px 44px rgba(23,28,38,0.16);
   --display: 'Archivo', sans-serif;
   --body: 'Inter', sans-serif;
 }
@@ -147,12 +151,12 @@ label input, label select { margin-top: 5px; }
 /* ---------- car grid ---------- */
 .car-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
 .car-card {
-  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
   display: flex; flex-direction: column; overflow: hidden;
-  box-shadow: 0 1px 3px rgba(23,28,38,0.05);
+  box-shadow: var(--shadow-sm);
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
-.car-card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(23,28,38,0.12); border-color: var(--petrol); }
+.car-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--petrol); }
 .car-card.sold-out { opacity: 0.72; }
 .car-card.sold-out:hover { transform: none; }
 
@@ -181,12 +185,72 @@ label input, label select { margin-top: 5px; }
 
 .car-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
 .car-category {
-  font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--steel); font-weight: 600;
+  display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  font-weight: 700; padding: 4px 10px; border-radius: 999px;
 }
 .car-title { font-family: var(--display); font-weight: 700; font-size: 1.25rem; margin: 0; }
 .car-title span { color: var(--petrol); }
 .car-price { font-family: var(--display); font-weight: 800; font-size: 1.35rem; margin-bottom: 4px; }
+
+/* ---------- hero stats ---------- */
+.hero-stats { position: relative; display: flex; gap: 28px; margin-top: 18px; flex-wrap: wrap; }
+.hero-stat { display: flex; flex-direction: column; }
+.hero-stat strong { font-family: var(--display); font-size: 1.5rem; font-weight: 800; color: #fff; }
+.hero-stat span { font-size: 0.75rem; letter-spacing: 0.06em; color: #c3c9d3; }
+
+/* ---------- category quick-filter chips ---------- */
+.category-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.chip {
+  font-family: var(--body); font-weight: 600; font-size: 0.82rem;
+  padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--line);
+  background: var(--panel); color: var(--steel); cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.chip-active { color: #fff !important; box-shadow: var(--shadow-sm); }
+
+/* ---------- admin: dark back-office theme ---------- */
+.admin-shell {
+  --paper: #0c1118;
+  --panel: #161d29;
+  --ink: #e7ebf1;
+  --steel: #8b93a3;
+  --line: #262f3f;
+  --petrol: #22b8b2;
+  --petrol-dark: #1a8f8a;
+  --ok-bg: #123425;
+  --ok-ink: #4ade80;
+  --err-bg: #3a1a17;
+  --danger: #f87171;
+  margin: -32px -24px -80px;
+  padding: 32px 24px 80px;
+  background: var(--paper);
+  min-height: calc(100vh - 66px);
+  color: var(--ink);
+}
+.admin-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--line);
+}
+.admin-eyebrow {
+  display: block; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--petrol); font-weight: 700; margin-bottom: 4px;
+}
+.admin-header h1 { font-family: var(--display); font-weight: 800; margin: 0 0 4px; color: var(--ink); }
+
+.stat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
+}
+.stat-label { font-size: 0.75rem; color: var(--steel); font-weight: 600; letter-spacing: 0.04em; }
+.stat-value { font-family: var(--display); font-weight: 800; font-size: 1.7rem; color: var(--ink); }
+.stat-value-sm { font-size: 1.15rem; }
+.stat-card-warn .stat-value { color: var(--danger); }
 
 /* ---------- admin ---------- */
 .admin-form {
@@ -204,7 +268,7 @@ label input, label select { margin-top: 5px; }
 .inventory-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 .inventory-table th {
   text-align: left; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--steel); padding: 12px 14px; border-bottom: 2px solid var(--line); background: #fbfbf9;
+  color: var(--steel); padding: 12px 14px; border-bottom: 2px solid var(--line); background: var(--paper);
 }
 .inventory-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
 .inventory-table .row-out td { color: var(--danger); }

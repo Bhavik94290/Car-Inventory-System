@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import api from '../api/client.js'
 import SearchBar from '../components/SearchBar.jsx'
 import VehicleCard from '../components/VehicleCard.jsx'
+import CategoryChips from '../components/CategoryChips.jsx'
 
 const PAGE_SIZE = 12
 const EMPTY_FILTERS = { make: '', model: '', category: '', minPrice: '', maxPrice: '' }
@@ -16,6 +17,7 @@ export default function Home() {
   const [totalElements, setTotalElements] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [categories, setCategories] = useState([])
+  const [stats, setStats] = useState({ total: 0, inStock: 0, categoryCount: 0 })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const isFirstRun = useRef(true)
@@ -24,7 +26,14 @@ export default function Home() {
 
   useEffect(() => {
     api.get('/vehicles')
-      .then(({ data }) => setCategories([...new Set(data.map((v) => v.category))].sort()))
+      .then(({ data }) => {
+        setCategories([...new Set(data.map((v) => v.category))].sort())
+        setStats({
+          total: data.length,
+          inStock: data.filter((v) => v.quantity > 0).length,
+          categoryCount: new Set(data.map((v) => v.category)).size,
+        })
+      })
       .catch(() => {})
   }, [])
 
@@ -87,7 +96,18 @@ export default function Home() {
       <section className="hero">
         <h1>The showroom floor</h1>
         <p className="muted">Browse the current inventory, filter by what you need, and drive one home.</p>
+        <div className="hero-stats">
+          <div className="hero-stat"><strong>{stats.total}</strong><span>vehicles listed</span></div>
+          <div className="hero-stat"><strong>{stats.inStock}</strong><span>in stock now</span></div>
+          <div className="hero-stat"><strong>{stats.categoryCount}</strong><span>categories</span></div>
+        </div>
       </section>
+
+      <CategoryChips
+        categories={categories}
+        active={filters.category}
+        onSelect={(category) => setFilters((f) => ({ ...f, category }))}
+      />
 
       <SearchBar
         filters={filters}

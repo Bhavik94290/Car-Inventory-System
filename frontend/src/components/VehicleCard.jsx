@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CarIllustration from './CarIllustration.jsx'
 import { useCart } from '../context/CartContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import { resolveCategoryStyle } from '../utils/categoryStyle.js'
 
 export default function VehicleCard({ vehicle }) {
   const [imgFailed, setImgFailed] = useState(false)
@@ -9,6 +10,7 @@ export default function VehicleCard({ vehicle }) {
   const [added, setAdded] = useState(false)
   const { addToCart } = useCart()
   const { isAdmin } = useAuth()
+  const categoryStyle = resolveCategoryStyle(vehicle.category)
 
   const outOfStock = vehicle.quantity === 0
   const showImage = !!vehicle.imageUrl && !imgFailed
@@ -39,7 +41,9 @@ export default function VehicleCard({ vehicle }) {
         </span>
       </div>
       <div className="car-card-body">
-        <span className="car-category">{vehicle.category}</span>
+        <span className="car-category" style={{ color: categoryStyle.accent, background: `${categoryStyle.accent}1a` }}>
+          {categoryStyle.emoji} {vehicle.category}
+        </span>
         <h3 className="car-title">{vehicle.make} <span>{vehicle.model}</span></h3>
         <div className="car-price">{priceFmt}</div>
         {isAdmin ? (
