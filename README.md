@@ -2,7 +2,19 @@
 
 A full-stack car dealership inventory system built with **Java Spring Boot** (backend), **React** (frontend) and **MySQL** — developed with a **TDD (Test-Driven Development)** approach.
 
-Users can register, log in, browse and search cars, add them to a cart, and pay via **Razorpay**. Admins can add, update, delete and restock vehicles, with photo uploads. An **AI chat assistant** (Claude) helps visitors search inventory and check their own orders. Purchasing (directly or via checkout) decrements stock; when quantity hits 0, the Purchase/Add-to-Cart controls are disabled and the API rejects further purchases.
+Users can register, log in (with a "forgot password" flow), browse and search cars, add them to a cart, and pay via **Razorpay** — with a downloadable **PDF receipt** afterward. Admins get a separate dark back-office dashboard to add, update, delete and restock vehicles, with photo uploads and live inventory stats. An **AI chat assistant** (Claude) helps visitors search inventory and check their own orders. Purchasing (directly or via checkout) decrements stock; when quantity hits 0, the Purchase/Add-to-Cart controls are disabled and the API rejects further purchases.
+
+---
+
+## Screenshots
+
+| Showroom (storefront) | Admin Panel |
+|---|---|
+| ![Showroom](docs/screenshots/showroom.png) | ![Admin Panel](docs/screenshots/admin-panel.png) |
+
+| Login |
+|---|
+| ![Login](docs/screenshots/login.png) |
 
 ---
 
@@ -10,11 +22,11 @@ Users can register, log in, browse and search cars, add them to a cart, and pay 
 
 | Layer    | Technology |
 |----------|------------|
-| Backend  | Java 17, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security, JWT (jjwt), Lombok, Validation |
+| Backend  | Java 17, Spring Boot 3, Spring Web, Spring Data JPA, Spring Security, JWT (jjwt), Lombok, Validation, DevTools (auto-restart) |
 | Database | MySQL 8 (H2 in-memory used for tests) |
 | Payments | Razorpay (Orders API + HMAC-SHA256 payment signature verification) |
 | AI       | Claude (Anthropic Java SDK) — tool-use chat assistant |
-| Frontend | React 18, Vite, Axios, React Router |
+| Frontend | React 18, Vite, Axios, React Router, jsPDF (client-side receipt generation) |
 | Testing  | JUnit 5, Mockito, AssertJ |
 
 ## Project structure
@@ -23,6 +35,7 @@ Users can register, log in, browse and search cars, add them to a cart, and pay 
 AI_Kata_Car_Dealership_Inventory_System/
 ├── backend/                     # Spring Boot API
 │   ├── pom.xml
+│   ├── .env.example             # copy to .env and fill in real secrets (git-ignored)
 │   └── src/
 │       ├── main/java/com/kata/dealership/
 │       │   ├── entity/          # User, Vehicle, Role, Order, OrderItem, OrderStatus, Payment, PaymentStatus
@@ -31,18 +44,20 @@ AI_Kata_Car_Dealership_Inventory_System/
 │       │   ├── security/        # JwtService, JwtAuthFilter, SecurityConfig
 │       │   ├── service/         # AuthService, VehicleService, PaymentService, RazorpayService, ChatService, FileStorageService
 │       │   ├── controller/      # AuthController, VehicleController, OrderController, ChatController
-│       │   ├── config/          # WebConfig (serves uploaded vehicle images)
+│       │   ├── config/          # WebConfig (serves uploaded vehicle images), VehicleDataSeeder (starter inventory)
 │       │   ├── util/            # IdGenerator (generated String primary keys)
 │       │   └── exception/       # Custom exceptions + global handler
 │       └── test/java/com/kata/dealership/service/
 │           ├── VehicleServiceTest.java   # TDD tests for inventory logic
-│           └── AuthServiceTest.java      # TDD tests for register/login
+│           └── AuthServiceTest.java      # TDD tests for register/login/forgot-password/reset-password
 └── frontend/                    # React app (Vite)
     └── src/
         ├── api/client.js        # Axios instance, JWT interceptor
-        ├── context/             # AuthContext, CartContext
-        ├── components/          # Navbar, SearchBar, VehicleCard, CarIllustration, ChatWidget, ErrorBoundary
-        └── pages/                # Login, Register, Home, AdminDashboard, CartPage, CheckoutPage, OrdersPage
+        ├── context/             # AuthContext, CartContext (syncs with live prices/stock)
+        ├── components/          # Navbar, SearchBar, CategoryChips, VehicleCard, CarIllustration, ChatWidget, ErrorBoundary
+        ├── utils/                # categoryStyle.js (shared category colors), receipt.js (PDF generation)
+        └── pages/                # Login, Register, ForgotPassword, ResetPassword, Home, AdminDashboard,
+                                   # CartPage, CheckoutPage, OrdersPage
 ```
 
 ---
@@ -54,7 +69,7 @@ AI_Kata_Car_Dealership_Inventory_System/
    ```sql
    CREATE DATABASE dealership_db;
    ```
-3. Configure credentials via environment variables (recommended) or edit `backend/src/main/resources/application.properties`:
+3. Configure secrets. Easiest: copy `backend/.env.example` to `backend/.env` and fill in real values — it's loaded automatically and never committed (git-ignored):
    ```
    DB_USERNAME=root
    DB_PASSWORD=<your mysql password>
@@ -64,13 +79,15 @@ AI_Kata_Car_Dealership_Inventory_System/
    ANTHROPIC_API_KEY=<from https://console.anthropic.com/settings/keys>
    UPLOAD_DIR=uploads/vehicles   # optional, defaults shown
    ```
-   Checkout, payment verification, and the chat assistant won't work without valid Razorpay/Anthropic keys — everything else (browsing, auth, admin CRUD) works fine without them.
+   (Plain shell environment variables work too, if you'd rather not use the `.env` file.)
+
+   Checkout, payment verification, and the chat assistant won't work without valid Razorpay/Anthropic keys — everything else (browsing, auth, admin CRUD) works fine without them. Razorpay also enforces its own per-transaction amount limit on new/unactivated accounts (commonly ₹5,00,000) — the seed data is priced to stay well under that.
 4. Start the API:
    ```bash
    cd backend
    mvn spring-boot:run
    ```
-   The API runs at `http://localhost:8080`.
+   The API runs at `http://localhost:8080`. On first boot with an empty database, `VehicleDataSeeder` populates ~24 realistic starter vehicles automatically. Thanks to Spring Boot DevTools, the app auto-restarts whenever your IDE recompiles a changed class — no need to stop/start it manually.
 
 ### Run the tests (TDD suite)
 ```bash
@@ -94,8 +111,10 @@ Open `http://localhost:5173`. CORS is preconfigured for this origin.
 ### Auth (public)
 | Method | Endpoint             | Body                              | Notes |
 |--------|----------------------|-----------------------------------|-------|
-| POST   | `/api/auth/register` | `{name, email, password, role?}`  | `role` optional: `USER` (default) / `ADMIN`. Returns JWT. |
+| POST   | `/api/auth/register` | `{name, email, password, role?}`  | `role` optional: `USER` (default) / `ADMIN`. Password needs 8+ chars, upper/lower/digit/symbol. Returns JWT. |
 | POST   | `/api/auth/login`    | `{email, password}`               | Returns JWT + user info. |
+| POST   | `/api/auth/forgot-password` | `{email}`                   | Always returns the same generic message (no email enumeration). Since no mail server is configured, the reset link/token is also returned directly in the response for this demo. |
+| POST   | `/api/auth/reset-password`  | `{token, newPassword}`      | Token is valid for 30 minutes and single-use. Returns **400** if invalid/expired. |
 
 ### Vehicles
 | Method | Endpoint                      | Access      | Notes |
@@ -115,7 +134,7 @@ Open `http://localhost:5173`. CORS is preconfigured for this origin.
 |--------|--------------------------|-----------|-------|
 | POST   | `/api/orders/checkout`  | Logged in | Body: `{items: [{vehicleId, quantity}]}`. Validates stock, creates a Razorpay order, returns `{orderId, razorpayOrderId, amount, currency, keyId}` for the frontend to open Razorpay Checkout with. |
 | POST   | `/api/orders/verify`   | Logged in | Body: `{orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature}`. Verifies the HMAC signature, decrements stock and marks the order PAID; idempotent if replayed. Returns **402** on signature mismatch. |
-| GET    | `/api/orders/mine`     | Logged in | The caller's past orders, newest first. |
+| GET    | `/api/orders/mine`     | Logged in | The caller's past orders, newest first. Each can be downloaded as a PDF receipt from the frontend. |
 
 ### Chat assistant
 | Method | Endpoint     | Access | Notes |
@@ -131,9 +150,9 @@ Protected endpoints require the header: `Authorization: Bearer <token>`.
   "make": "Toyota",
   "model": "Fortuner",
   "category": "SUV",
-  "price": 3500000,
-  "quantity": 4,
-  "imageUrl": "http://localhost:8080/uploads/vehicles/img_...jpg",
+  "price": 245000,
+  "quantity": 3,
+  "imageUrl": "http://localhost:8080/uploads/vehicles/img_...png",
   "createdAt": "2026-07-12T05:30:00Z"
 }
 ```
@@ -149,7 +168,7 @@ The core business rules were driven by tests written **before** the implementati
 3. **Refactor** — extract exceptions, add `@Transactional`, clean up while tests stay green.
 
 Covered by the suite (`mvn test`):
-- Auth: register works, register as admin, duplicate email rejected, login works, wrong credentials rejected.
+- Auth: register works, register as admin, duplicate email rejected, login works, wrong credentials rejected, forgot-password issues/omits a reset token correctly (no email enumeration), reset-password updates the password for a valid token and rejects unknown/expired tokens.
 - Vehicles: add, get all, search (with pagination, sorting and the in-stock-only filter), update, update-not-found, delete, delete-not-found.
 - Inventory: purchase decrements quantity, purchase fails at 0 stock, restock increments quantity, restock rejects non-positive amounts.
 
@@ -160,12 +179,15 @@ Covered by the suite (`mvn test`):
 ## Feature checklist
 
 - [x] Register / Login with JWT (password policy: 8+ chars, upper/lower/digit/symbol)
+- [x] Forgot / reset password flow
 - [x] Roles: USER and ADMIN (Spring Security route rules + `@EnableMethodSecurity`)
-- [x] View all cars, search/filter/sort/paginate by make / model / category / price range / in-stock-only
+- [x] View all cars, search/filter/sort/paginate by make / model / category / price range / in-stock-only, plus one-click category chips
 - [x] Purchase directly, or add to cart and pay via Razorpay checkout (signature-verified)
+- [x] Downloadable PDF receipt after checkout, and for any past order
 - [x] Order history per user
-- [x] Admin: add / update / delete / restock vehicles, with photo upload
+- [x] Admin: separate dark dashboard with live inventory stats (total vehicles, units in stock, out of stock, inventory value); add / update / delete / restock vehicles, with photo upload; no cart access
 - [x] AI chat assistant (Claude) for vehicle search and order lookup
+- [x] Site-wide dark theme
 - [x] Persistent MySQL storage via Spring Data JPA
 - [x] Validation + global exception handling with clean JSON errors
 - [x] TDD unit tests with JUnit 5 + Mockito
@@ -176,10 +198,11 @@ Covered by the suite (`mvn test`):
 
 **How I used it:**
 - **Scaffolding:** Asked Claude to generate the initial Maven `pom.xml` dependency set (Spring Web, Data JPA, Security, Validation, MySQL driver, jjwt) and the Vite/React project skeleton, then adjusted versions and config by hand.
-- **Test generation:** Asked Claude to draft the Mockito/JUnit 5 test cases for `AuthServiceTest` and `VehicleServiceTest` from the plain-English business rules in the kata brief (e.g. "purchase should fail with an out-of-stock error when quantity is 0"), before any service implementation existed. These tests were run and confirmed failing (RED) before I wrote the corresponding service.
-- **Implementation:** Asked Claude to scaffold each service/controller method to satisfy the already-written tests (GREEN), then reviewed the generated code, added `@Transactional` boundaries, tightened the Spring Security route rules, and adjusted error handling by hand.
-- **Debugging:** Used Claude to help diagnose a broken local Maven plugin cache (corrupted `maven-surefire-plugin`/`maven-clean-plugin` jars from a prior partial download, compounded by a local TLS-inspecting proxy blocking Maven Central) by pinning to an already-cached plugin/JUnit version rather than re-downloading.
-- **Git history:** Used Claude Code to reconstruct this repository's commit history into discrete Red → Green → Refactor steps per feature slice, verifying each Red commit against a real failing/non-compiling build and each Green commit against a real passing `mvn test` run before committing.
-- **Feature review and commit organization:** The cart/checkout/Razorpay payments, order history, image uploads, and Claude-powered chat assistant were already written locally. Claude Code reviewed that code (correctness, security — e.g. confirming the Razorpay signature check uses a constant-time comparison and that no API keys were hardcoded — and consistency with the rest of the codebase), found and fixed a real bug (the showroom's default "Newest listed" sort silently fell back to oldest-first because the frontend sent a `sortBy` value the backend doesn't whitelist), and split the changes into one commit per feature slice, verifying the backend still built and all tests passed after each commit. Those commits don't carry an AI co-author trailer, at the developer's instruction, since the feature code itself predates this review.
+- **Test generation:** Asked Claude to draft the Mockito/JUnit 5 test cases for `AuthServiceTest` and `VehicleServiceTest` from the plain-English business rules in the kata brief, before any service implementation existed. These tests were run and confirmed failing (RED) before writing the corresponding service, then implemented to make them pass (GREEN).
+- **New features, TDD-first:** The forgot/reset-password flow was built the same way — failing tests committed first (verified failing against a clean build), then the `AuthService` implementation, then the controller/security wiring.
+- **Feature review:** The cart/checkout/Razorpay payments, order history, image uploads, and Claude-powered chat assistant were already written locally. Claude Code reviewed that code (correctness, security, consistency with the rest of the codebase), found and fixed real bugs along the way — e.g. the showroom's default sort silently falling back to oldest-first instead of newest, a currency symbol rendering as garbage in the PDF receipt because the PDF library's font doesn't support the ₹ glyph, and Razorpay's raw JSON error dump leaking onto the checkout screen instead of a readable message.
+- **UI/UX design:** Asked Claude to design and build the dark admin dashboard, the site-wide dark theme, category quick-filter chips, and the vehicle-card/showroom visual refresh, iterating based on screenshots.
+- **Debugging & tooling:** Used Claude to diagnose a broken local Maven plugin cache and a local network TLS-interception issue blocking Maven/npm/GitHub access, add Spring Boot DevTools for auto-restart, and wire up a git-ignored `.env` file so secrets don't need to be re-entered every run.
+- **Git history:** Used Claude Code to build and maintain a clean commit history — a genuine Red → Green → Refactor sequence for the core TDD suite (each Red commit verified against a real failing build, each Green against a real passing test run), short conventional-commit messages (`feat:` / `fix:` / `update:` / `chore:` / `docs:`) for everything after, and a later cleanup pass reasoning through a `git filter-branch` rewrite of already-pushed commits without disturbing shared history.
 
-Commits generated by Claude carry a `Co-authored-by: Claude <noreply@anthropic.com>` trailer, per the kata's AI usage policy.
+At the developer's explicit request, ongoing commits do not carry an AI co-author trailer.
