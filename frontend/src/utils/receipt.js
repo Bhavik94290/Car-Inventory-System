@@ -1,8 +1,9 @@
 import jsPDF from 'jspdf'
 
-const priceFmt = (n) => Number(n).toLocaleString('en-IN', {
-  style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-})
+// jsPDF's standard fonts (Helvetica/Times/Courier) use WinAnsi encoding, which
+// has no Rupee glyph (U+20B9) — toLocaleString(..., { style: 'currency' })
+// renders as garbage in the PDF. Use plain "Rs." instead of the symbol.
+const priceFmt = (n) => `Rs. ${Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 
 const MARGIN_X = 48
 const RIGHT_EDGE = 548
