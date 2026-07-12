@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import api from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -25,11 +25,20 @@ function loadRazorpayScript() {
 
 export default function CheckoutPage() {
   const { user } = useAuth()
-  const { items, cartTotal, clearCart } = useCart()
+  const { items, cartTotal, clearCart, syncWithCatalog } = useCart()
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
   const navigate = useNavigate()
+
+  // Re-sync against live prices/stock before showing the amount that's about
+  // to be charged — the cart may hold a stale snapshot, but the backend
+  // always computes the real total from current vehicle prices, so this
+  // display has to match what actually gets charged.
+  useEffect(() => {
+    syncWithCatalog()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!user) return <Navigate to="/login" replace />
   if (items.length === 0 && !success) return <Navigate to="/cart" replace />

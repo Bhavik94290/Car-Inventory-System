@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import api from '../api/client.js'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'cart'
@@ -53,12 +54,57 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setItems([])
 
+  // Cart items are a snapshot taken when "Add to Cart" was clicked. If an
+  // admin changes a price/stock (or deletes a vehicle) afterwards, the cart
+  // would keep showing stale numbers — and checkout always charges the
+  // *current* server-side price regardless, so a stale display could show
+  // one amount and charge another. Re-fetch each item against the live
+  // catalog and reconcile before showing the cart or starting checkout.
+  const syncWithCatalog = async () => {
+    if (items.length === 0) return { changed: [], removed: [] }
+
+    const results = await Promise.all(
+      items.map((item) =>
+        api.get(`/vehicles/${item.vehicleId}`)
+          .then(({ data }) => ({ item, vehicle: data }))
+          .catch(() => ({ item, vehicle: null }))
+      )
+    )
+
+    const changed = []
+    const removed = []
+    const nextItems = []
+
+    for (const { item, vehicle } of results) {
+      if (!vehicle || vehicle.quantity <= 0) {
+        removed.push({ ...item, reason: vehicle ? 'out of stock' : 'no longer available' })
+        continue
+      }
+      if (Number(vehicle.price) !== Number(item.price) || vehicle.quantity !== item.stock) {
+        changed.push({ make: vehicle.make, model: vehicle.model, oldPrice: item.price, newPrice: vehicle.price })
+      }
+      nextItems.push({
+        ...item,
+        make: vehicle.make,
+        model: vehicle.model,
+        category: vehicle.category,
+        price: vehicle.price,
+        imageUrl: vehicle.imageUrl,
+        stock: vehicle.quantity,
+        quantity: Math.min(item.quantity, vehicle.quantity),
+      })
+    }
+
+    setItems(nextItems)
+    return { changed, removed }
+  }
+
   const cartCount = items.reduce((sum, i) => sum + i.quantity, 0)
   const cartTotal = items.reduce((sum, i) => sum + Number(i.price) * i.quantity, 0)
 
   return (
     <CartContext.Provider
-      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}
+      value={{ items, addToCart, removeFromCart, updateQuantity, clearCart, syncWithCatalog, cartCount, cartTotal }}
     >
       {children}
     </CartContext.Provider>
