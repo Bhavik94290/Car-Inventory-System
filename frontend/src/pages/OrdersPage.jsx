@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { downloadReceipt } from '../utils/receipt.js'
 
 const priceFmt = (n) => Number(n).toLocaleString('en-IN', {
   style: 'currency', currency: 'INR', maximumFractionDigits: 0,
 })
 
 export default function OrdersPage() {
+  const { user } = useAuth()
   const [orders, setOrders] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -45,6 +48,13 @@ export default function OrdersPage() {
               ))}
             </ul>
             <div className="order-card-total">Total: {priceFmt(order.totalAmount)}</div>
+            <button
+              className="btn btn-outline btn-mini"
+              style={{ marginTop: 10 }}
+              onClick={() => downloadReceipt(order, user)}
+            >
+              📄 Download Receipt (PDF)
+            </button>
           </div>
         ))}
       </div>

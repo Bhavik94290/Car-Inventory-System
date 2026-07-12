@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import api from '../api/client.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCart } from '../context/CartContext.jsx'
+import { downloadReceipt } from '../utils/receipt.js'
 
 const priceFmt = (n) => Number(n).toLocaleString('en-IN', {
   style: 'currency', currency: 'INR', maximumFractionDigits: 0,
@@ -99,7 +100,17 @@ export default function CheckoutPage() {
         <div className="auth-icon" aria-hidden="true">✅</div>
         <h1>Payment successful</h1>
         <p className="muted">Order {success.id} confirmed — {priceFmt(success.totalAmount)} paid.</p>
-        <button className="btn btn-solid btn-block" onClick={() => navigate('/orders')}>
+        <button
+          className="btn btn-outline btn-block"
+          onClick={() => downloadReceipt(success, user)}
+        >
+          📄 Download Receipt (PDF)
+        </button>
+        <button
+          className="btn btn-solid btn-block"
+          style={{ marginTop: 10 }}
+          onClick={() => navigate('/orders')}
+        >
           View my orders
         </button>
         <button
