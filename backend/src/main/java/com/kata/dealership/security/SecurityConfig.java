@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/vehicles", "/api/vehicles/search", "/api/vehicles/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/chat").permitAll()
                 // admin only
                 .requestMatchers(HttpMethod.POST, "/api/vehicles", "/api/vehicles/upload-image").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/vehicles/**").hasRole("ADMIN")

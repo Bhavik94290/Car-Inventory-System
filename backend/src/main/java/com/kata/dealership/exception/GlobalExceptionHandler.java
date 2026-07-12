@@ -49,6 +49,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body(HttpStatus.BAD_GATEWAY, ex.getMessage()));
     }
 
+    @ExceptionHandler(ChatServiceException.class)
+    public ResponseEntity<Map<String, Object>> chatService(ChatServiceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body(HttpStatus.BAD_GATEWAY, ex.getMessage()));
+    }
+
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<Map<String, Object>> fileStorage(FileStorageException ex) {
         return ResponseEntity.badRequest().body(body(HttpStatus.BAD_REQUEST, ex.getMessage()));
